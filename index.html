@@ -8,8 +8,8 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Paisa">
 <meta name="theme-color" content="#0f0f0f">
-<link rel="manifest" href="/manifest.json">
-<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="manifest" href="/paisa-app/manifest.json">
+<link rel="apple-touch-icon" href="/paisa-app/icon-192.png">
 <title>Paisa</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <style>
@@ -721,7 +721,7 @@ const persist=()=>localStorage.setItem('paisa_txns',JSON.stringify(txns));
 // Register service worker
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
-    navigator.serviceWorker.register('/sw.js')
+    navigator.serviceWorker.register('/paisa-app/sw.js')
       .then(r=>console.log('SW registered:',r.scope))
       .catch(e=>console.log('SW error:',e));
   });
