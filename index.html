@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -150,7 +150,7 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:#fafaf8;color:#0f0f0f
 
 .total-spent-filters{display:flex;gap:10px;padding:12px 16px 18px;margin-top:4px}
 .total-spent-filters .chart-select{min-width:0;flex:1;width:calc(50% - 5px);padding:9px 8px;font-size:12px}
-.card-actions{display:flex;gap:10px;padding:12px 20px 16px;}
+.card-actions{display:flex;gap:10px;padding:10px 20px 12px;}
 .card-actions .save-btn{margin:0;flex:1;min-width:0;padding:11px 2px;font-size:12px;font-weight:600;border-radius:12px;letter-spacing:0;text-align:center;white-space:nowrap;}
 .ca-outline{background:var(--surface)!important;color:var(--ink)!important;border:1.5px solid var(--rule)!important;}
 .ca-primary{background:var(--ink)!important;color:#fff!important;border:none!important;}
@@ -304,6 +304,7 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:#fafaf8;color:#0f0f0f
         <div class="hero-amt"><sup>₹</sup><span id="h-total">0</span></div>
         <div class="hero-sub" id="h-month">spent this month</div>
         <div id="inspire-msg" style="display:none;font-size:12px;color:var(--gold-d);font-style:italic;margin-top:8px;line-height:1.4;max-width:220px;"></div>
+        <div id="streak-badge" style="display:none;margin-top:8px;display:inline-flex;align-items:center;gap:5px;background:var(--gold-pale);border:1px solid var(--gold);border-radius:99px;padding:4px 10px;font-size:12px;font-weight:600;color:var(--gold-d)">🔥 <span id="streak-count">0</span> day streak</div>
       </div>
       <div class="kpi-grid">
         <div class="kpi"><div class="kpi-label">Today</div><div class="kpi-val r" id="k-today">₹0</div></div>
@@ -311,7 +312,7 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:#fafaf8;color:#0f0f0f
         <div class="kpi"><div class="kpi-label">Income</div><div class="kpi-val g" id="k-inc">₹0</div></div>
         <div class="kpi"><div class="kpi-label">Savings</div><div class="kpi-val" id="k-sav" style="color:var(--gold-d)">₹0</div></div>
       </div>
-      <div id="cc-section" class="sec-head"><h2>💳 Credit Card 1</h2></div>
+      <div id="cc-section" class="sec-head"><h2 id="cc1-name-lbl">💳 Credit Card 1</h2><button onclick="renameCC(1)" style="font-size:12px;color:var(--ink3);background:none;border:none;cursor:pointer">Rename</button></div>
       <div id="cc-kpi-grid" class="kpi-grid" style="margin-top:0">
         <div class="kpi"><div class="kpi-label">Card Limit</div><div class="kpi-val" id="cc-limit">₹0</div></div>
         <div class="kpi"><div class="kpi-label">Card Expenses</div><div class="kpi-val r" id="cc-exp">₹0</div></div>
@@ -322,11 +323,10 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:#fafaf8;color:#0f0f0f
       <div id="cc-card-actions" class="card-actions">
         <button class="save-btn ca-outline" onclick="openLimitModal()">Set Limit</button>
         <button class="save-btn ca-outline" onclick="addCardPayment()">Log Payment</button>
-        <button class="save-btn ca-primary" onclick="openSheet()">＋ Add</button>
       </div>
       <div id="cc-payments-head" class="sec-head" style="display:none"><h2>Card 1 Payments</h2></div>
       <div class="feed" id="cc-payment-feed" style="display:none"></div>
-      <div id="cc2-section" class="sec-head"><h2>💳 Credit Card 2</h2></div>
+      <div id="cc2-section" class="sec-head"><h2 id="cc2-name-lbl">💳 Credit Card 2</h2><button onclick="renameCC(2)" style="font-size:12px;color:var(--ink3);background:none;border:none;cursor:pointer">Rename</button></div>
       <div id="cc2-kpi-grid" class="kpi-grid" style="margin-top:0;display:none">
         <div class="kpi"><div class="kpi-label">Card Limit</div><div class="kpi-val" id="cc2-limit">₹0</div></div>
         <div class="kpi"><div class="kpi-label">Card Expenses</div><div class="kpi-val r" id="cc2-exp">₹0</div></div>
@@ -337,7 +337,6 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:#fafaf8;color:#0f0f0f
       <div id="cc2-card-actions" class="card-actions" style="display:none">
         <button class="save-btn ca-outline" onclick="openLimit2Modal()">Set Limit</button>
         <button class="save-btn ca-outline" onclick="openPay2Modal()">Log Payment</button>
-        <button class="save-btn ca-primary" onclick="openSheet()">＋ Add</button>
       </div>
       <div id="cc2-payments-head" class="sec-head" style="display:none"><h2>Card 2 Payments</h2></div>
       <div class="feed" id="cc2-payment-feed" style="display:none"></div>
@@ -365,6 +364,18 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:#fafaf8;color:#0f0f0f
 
     <!-- ALL -->
     <div class="screen" id="s-all">
+      <div style="padding:16px 20px 0">
+        <div style="display:flex;gap:8px;align-items:center;background:var(--surface);border:1.5px solid var(--rule);border-radius:var(--r-lg);padding:10px 14px;transition:border-color .15s" id="search-wrap">
+          <span style="font-size:16px;color:var(--ink3)">🔍</span>
+          <input id="search-inp" type="text" placeholder="Search transactions..." style="flex:1;border:none;background:none;font-family:inherit;font-size:14px;color:var(--ink);outline:none;" oninput="renderAll()" onfocus="document.getElementById('search-wrap').style.borderColor='var(--gold)'" onblur="document.getElementById('search-wrap').style.borderColor='var(--rule)'">
+          <button id="search-clear" onclick="document.getElementById('search-inp').value='';renderAll()" style="display:none;background:none;border:none;cursor:pointer;color:var(--ink3);font-size:18px">×</button>
+        </div>
+        <div style="margin-top:8px;display:flex;gap:6px;align-items:center">
+          <input id="ai-search-inp" type="text" placeholder="🧠 Ask anything: 'Goa trip', 'son birthday'..." style="flex:1;padding:9px 12px;border:1.5px solid var(--rule);border-radius:var(--r-lg);background:var(--paper);font-family:inherit;font-size:13px;color:var(--ink);outline:none;" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--rule)'" onkeydown="if(event.key==='Enter')runAISearch()">
+          <button onclick="runAISearch()" style="padding:9px 14px;background:var(--ink);color:#fff;border:none;border-radius:var(--r-lg);font-family:inherit;font-size:13px;cursor:pointer;white-space:nowrap">Ask AI</button>
+        </div>
+        <div id="ai-search-result" style="display:none;margin-top:10px;padding:12px 14px;background:var(--gold-pale);border:1.5px solid var(--gold);border-radius:var(--r-lg);font-size:13px;line-height:1.6;color:var(--ink2)"></div>
+      </div>
       <div class="sec-head" style="padding-top:20px"><h2>Transactions</h2></div>
       <div class="filter-row">
         <label>Month</label>
@@ -383,8 +394,15 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:#fafaf8;color:#0f0f0f
           <input id="profile-name" type="text" placeholder="e.g. Arjun" style="width:100%;padding:11px 14px;border:1px solid var(--rule);border-radius:var(--r);background:var(--paper);color:var(--ink);font-family:inherit;font-size:14px;outline:none;" oninput="saveProfile()">
         </div>
         <div>
-          <label style="font-size:11px;color:var(--ink3);letter-spacing:.07em;text-transform:uppercase;display:block;margin-bottom:6px">Daily inspiration</label>
-          <input id="profile-inspire" type="text" placeholder="e.g. Save today, smile tomorrow" style="width:100%;padding:11px 14px;border:1px solid var(--rule);border-radius:var(--r);background:var(--paper);color:var(--ink);font-family:inherit;font-size:14px;outline:none;" oninput="saveProfile()">
+          <label style="font-size:11px;color:var(--ink3);letter-spacing:.07em;text-transform:uppercase;display:block;margin-bottom:6px">Daily Inspiration Lines</label>
+          <textarea id="inspire-lines-input" rows="4" placeholder="Add one line per row&#10;e.g. Save today, smile tomorrow&#10;Every rupee saved is a rupee earned" style="width:100%;padding:11px 14px;border:1px solid var(--rule);border-radius:var(--r);background:var(--paper);color:var(--ink);font-family:inherit;font-size:13px;outline:none;resize:none;line-height:1.6;"></textarea>
+          <div style="font-size:11px;color:var(--ink3);margin-top:4px">One line per row. App picks a random one each day.</div>
+          <button class="save-btn" onclick="saveInspireLines()" style="margin:8px 0 0;width:100%;padding:11px">Save Lines</button>
+          <div style="margin-top:10px">
+            <label style="font-size:11px;color:var(--ink3);text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:6px">Currently showing</label>
+            <div id="inspire-current-display" style="font-size:13px;color:var(--gold-d);font-style:italic;padding:10px 14px;background:var(--gold-pale);border-radius:var(--r);border:1px solid var(--gold);min-height:36px"></div>
+            <button onclick="pickRandomInspire()" style="font-size:12px;color:var(--gold-d);background:none;border:none;cursor:pointer;margin-top:6px">🔀 Pick random</button>
+          </div>
         </div>
       </div>
       <div style="height:8px"></div>
@@ -451,6 +469,15 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:#fafaf8;color:#0f0f0f
         <label style="font-size:11px;color:var(--ink3);letter-spacing:.07em;text-transform:uppercase;display:block;margin-bottom:6px">Anthropic API Key (for screenshot reading)</label>
         <input id="si-api-key-input" type="password" placeholder="sk-ant-..." style="width:100%;padding:11px 14px;border:1px solid var(--rule);border-radius:var(--r);background:var(--paper);color:var(--ink);font-family:inherit;font-size:13px;outline:none;" oninput="saveAPIKey()">
         <div style="font-size:11px;color:var(--ink3);margin-top:6px;line-height:1.5">Used only for screenshot OCR. Stored locally on your device. Get yours at <b>console.anthropic.com</b></div>
+      </div>
+      <div class="sec-head"><h2>End-of-Day Summary</h2></div>
+      <div style="padding:0 20px 12px;display:flex;flex-direction:column;gap:8px">
+        <div style="display:flex;gap:10px;align-items:center">
+          <input type="time" id="eod-time-input" value="21:00" style="flex:1;padding:10px 12px;border:1px solid var(--rule);border-radius:var(--r);background:var(--paper);color:var(--ink);font-family:inherit;font-size:14px">
+          <button class="save-btn" onclick="saveEODTime()" style="margin:0;width:auto;padding:10px 16px;font-size:13px">Set Time</button>
+        </div>
+        <button class="save-btn" onclick="requestEODPermission()" style="margin:0;background:var(--surface);color:var(--ink);border:1px solid var(--rule);font-size:13px;padding:11px">🔔 Enable Notifications</button>
+        <button class="save-btn" onclick="showEODSummary()" style="margin:0;background:var(--surface);color:var(--ink);border:1px solid var(--rule);font-size:13px;padding:11px">👁 Preview Today's Summary</button>
       </div>
       <div class="sec-head"><h2>Security</h2></div>
       <div style="padding:0 20px 12px">
@@ -623,6 +650,26 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:#fafaf8;color:#0f0f0f
     <div class="modal-actions">
       <button class="save-btn" onclick="document.getElementById('clearModal').style.display='none'" style="background:var(--surface);color:var(--ink);border:1px solid var(--rule)">Cancel</button>
       <button class="save-btn" onclick="document.getElementById('clearModal').style.display='none';txns=[];persist();renderHome();renderAll();if(document.getElementById('s-more').classList.contains('active'))renderMore();const sg=document.getElementById('sum-grid');if(sg){const now=new Date();sg.innerHTML='<div class=\"stat-box\"><div class=\"stat-label\">Transactions</div><div class=\"stat-val\">0</div></div><div class=\"stat-box\"><div class=\"stat-label\">This month</div><div class=\"stat-val\">0 txns</div></div><div class=\"stat-box\"><div class=\"stat-label\">Total spent</div><div class=\"stat-val\" style=\"color:var(--red)\">₹0</div></div><div class=\"stat-box\"><div class=\"stat-label\">Total income</div><div class=\"stat-val\" style=\"color:var(--green)\">₹0</div></div>';}toast('All transactions cleared');" style="background:#c0392b">Delete All</button>
+    </div>
+  </div>
+</div>
+<div id="eod-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:2000;align-items:center;justify-content:center">
+  <div class="modal-card" style="text-align:center">
+    <div style="font-size:36px;margin-bottom:8px">🌙</div>
+    <h3 style="margin:0 0 4px">Today's Summary</h3>
+    <div style="font-size:28px;font-family:'DM Mono',monospace;font-weight:500;color:var(--red);margin:10px 0" id="eod-total">₹0</div>
+    <pre id="eod-breakdown" style="font-family:'DM Sans',sans-serif;font-size:13px;color:var(--ink2);line-height:1.8;text-align:left;white-space:pre-wrap;background:var(--rule2);padding:12px;border-radius:var(--r);margin:0 0 16px"></pre>
+    <button class="save-btn" onclick="document.getElementById('eod-modal').style.display='none'" style="margin:0;width:100%">Done</button>
+  </div>
+</div>
+<div id="renameModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:2000;align-items:center;justify-content:center">
+  <div class="modal-card">
+    <h3 id="rename-title">Rename Card</h3>
+    <label>Card name</label>
+    <input id="rename-input" placeholder="e.g. Axis CC, HDFC Millennia" maxlength="20">
+    <div class="modal-actions">
+      <button class="save-btn" onclick="document.getElementById('renameModal').style.display='none'" style="background:var(--surface);color:var(--ink);border:1px solid var(--rule)">Cancel</button>
+      <button class="save-btn" onclick="saveRename()">Save</button>
     </div>
   </div>
 </div>
@@ -951,10 +998,16 @@ function renderHome(){
   document.getElementById('k-week').textContent=fmt(txns.filter(t=>t.type==='exp'&&t.mode!=='Credit Card 1'&&t.mode!=='Credit Card 2'&&t.mode!=='Credit Card'&&sameW(t.date)).reduce((s,t)=>s+t.amt,0));
   document.getElementById('k-inc').textContent=fmt(income);
   document.getElementById('k-sav') && (document.getElementById('k-sav').textContent=fmt(mSav.reduce((s,t)=>s+t.amt,0)));
+  // Streak
+  const streak=getStreak();
+  const sb=document.getElementById('streak-badge');
+  const sc=document.getElementById('streak-count');
+  if(sb&&sc){sb.style.display=streak>0?'inline-flex':'none';sc.textContent=streak;}
   const totalSav=mSav.reduce((s,t)=>s+t.amt,0);
   const savEl=document.getElementById('k-sav');if(savEl)savEl.textContent=fmt(totalSav);
 
 
+  renderCoach();
   const feed=document.getElementById('home-feed');
   const recent=txns.slice(0,5);
   feed.innerHTML=recent.length?recent.map(t=>rowHTML(t)).join(''):`<div class="empty"><div class="ei">📒</div><p>Nothing logged yet</p><small>Tap + to add your first transaction</small></div>`;
@@ -1013,6 +1066,7 @@ function renderCharts(){
     const sow=new Date();sow.setDate(now.getDate()-((now.getDay()+6)%7));sow.setHours(0,0,0,0);
     filtered=filtered.filter(t=>{const diff=Math.round((new Date(t.date+'T12:00')-sow)/864e5);return diff>=0&&diff<7;});
   } else filtered=filtered.filter(t=>new Date(t.date+'T12:00').getFullYear()===now.getFullYear());
+  window._drillData=filtered;
   const totals={}; filtered.forEach(t=>totals[t.cat]=(totals[t.cat]||0)+t.amt);
   const entries=Object.entries(totals).sort((a,b)=>b[1]-a[1]);
   const labels=entries.map(x=>x[0]), data=entries.map(x=>Math.round(x[1]));
@@ -1044,7 +1098,7 @@ function renderCharts(){
     const cat=C(n),pct=Math.round(amt/total*100),barW=Math.round(amt/mx*100);
     const safeN=encodeURIComponent(n);
     return `<div class="cbr" onclick="openDrill(decodeURIComponent('${safeN}'))" style="cursor:pointer"><div class="cbi" style="background:${cat.bg}">${cat.e}</div><div class="cbi2"><div class="cbt"><span class="cbn">${n}</span><span class="cba">${fmt(amt)} <span style="color:${cat.c};font-weight:600">${pct}%</span></span></div><div class="cbtrack"><div class="cbfill" style="width:${barW}%;background:${cat.c}"></div></div></div><span style="color:var(--ink3);font-size:16px;margin-left:4px;flex-shrink:0">›</span></div>`;
-  }).join('')||'<div style="color:var(--ink3);font-size:14px;padding:0 20px">No expenses for this period</div>';
+  }).join('')||`<div class="empty" style="padding:32px 20px"><div class="ei">📊</div><p>No data for ${cTabVal==='week'?'this week':cTabVal==='month'?'this month':'this year'}</p><small>Add transactions to see category breakdown</small></div>`;
 }
 
 // Category drill-down
@@ -1120,14 +1174,19 @@ function renderMore(){
     <div class="stat-box"><div class="stat-label">This month</div><div class="stat-val">${mT.length} txns</div></div>
     <div class="stat-box"><div class="stat-label">Total spent</div><div class="stat-val" style="color:var(--red)">${fmt(totE)}</div></div>
     <div class="stat-box"><div class="stat-label">Total income</div><div class="stat-val" style="color:var(--green)">${fmt(totI)}</div></div>`;
+  // Init EOD time
+  const eodInp=document.getElementById('eod-time-input');
+  if(eodInp)eodInp.value=localStorage.getItem('paisa_eod_time')||'21:00';
   // Init API key field
   const apiKeyField=document.getElementById('si-api-key-input');
   if(apiKeyField)apiKeyField.value=localStorage.getItem('paisa_api_key')||'';
   // Init profile
   const pname=document.getElementById('profile-name');
   if(pname)pname.value=localStorage.getItem('paisa_username')||'';
-  const pinspire=document.getElementById('profile-inspire');
-  if(pinspire)pinspire.value=localStorage.getItem('paisa_inspire_msg')||'';
+  const inspireTA=document.getElementById('inspire-lines-input');
+  if(inspireTA){const ls=JSON.parse(localStorage.getItem('paisa_inspire_lines')||'[]');inspireTA.value=ls.join('\n');}
+  const inspCur=document.getElementById('inspire-current-display');
+  if(inspCur)inspCur.textContent=localStorage.getItem('paisa_inspire_msg')||'No line selected yet';
   // Init CC toggle
   const ccToggle=document.getElementById('cc-toggle');
   if(ccToggle) ccToggle.checked=isCCEnabled();
@@ -1238,7 +1297,7 @@ function xPDF(){
   <style>body{font-family:Arial,sans-serif;max-width:680px;margin:32px auto;color:#111;font-size:13px}h1{font-size:22px;margin-bottom:2px}h2{font-size:13px;color:#666;margin:22px 0 8px;text-transform:uppercase;letter-spacing:.05em}table{width:100%;border-collapse:collapse}th{text-align:left;font-size:11px;color:#999;padding:4px 8px;border-bottom:2px solid #eee}td{padding:7px 8px;border-bottom:1px solid #f0f0f0}.cards{display:flex;gap:16px;margin:14px 0}.card{flex:1;padding:12px 16px;border:1px solid #eee;border-radius:8px}.cl{font-size:11px;color:#888}.cv{font-size:20px;font-weight:600;margin-top:2px}
 .total-spent-filters{display:flex;gap:10px;padding:12px 16px 18px;margin-top:4px}
 .total-spent-filters .chart-select{min-width:0;flex:1;width:calc(50% - 5px);padding:9px 8px;font-size:12px}
-.card-actions{display:flex;gap:10px;padding:12px 20px 16px;}
+.card-actions{display:flex;gap:10px;padding:10px 20px 12px;}
 .card-actions .save-btn{margin:0;flex:1;min-width:0;padding:11px 2px;font-size:12px;font-weight:600;border-radius:12px;letter-spacing:0;text-align:center;white-space:nowrap;}
 .ca-outline{background:var(--surface)!important;color:var(--ink)!important;border:1.5px solid var(--rule)!important;}
 .ca-primary{background:var(--ink)!important;color:#fff!important;border:none!important;}
@@ -1290,8 +1349,288 @@ function toast(msg){
 }
 
 // Init
-renderHome();renderChips();
+initInspireDaily();initEODNotification();renderHome();renderChips();loadCCNames();
 
+
+
+// CC Rename
+let _renameCard=1;
+function renameCC(n){
+  _renameCard=n;
+  const cur=localStorage.getItem('paisa_cc'+n+'_name')||(n===1?'Credit Card 1':'Credit Card 2');
+  document.getElementById('rename-title').textContent='Rename Card '+n;
+  document.getElementById('rename-input').value=cur.replace('💳 ','');
+  document.getElementById('renameModal').style.display='flex';
+  setTimeout(()=>document.getElementById('rename-input').focus(),100);
+}
+function saveRename(){
+  const v=document.getElementById('rename-input').value.trim()||(_renameCard===1?'Credit Card 1':'Credit Card 2');
+  localStorage.setItem('paisa_cc'+_renameCard+'_name',v);
+  document.getElementById('cc'+_renameCard+'-name-lbl').textContent='💳 '+v;
+  document.getElementById('renameModal').style.display='none';
+  toast('Card renamed ✓');
+}
+function loadCCNames(){
+  const n1=localStorage.getItem('paisa_cc1_name');
+  const n2=localStorage.getItem('paisa_cc2_name');
+  if(n1){const el=document.getElementById('cc1-name-lbl');if(el)el.textContent='💳 '+n1;}
+  if(n2){const el=document.getElementById('cc2-name-lbl');if(el)el.textContent='💳 '+n2;}
+}
+
+
+
+// AI Financial Memory Search
+async function runAISearch(){
+  const q=document.getElementById('ai-search-inp')?.value.trim();
+  if(!q){toast('Type a question first');return;}
+  const apiKey=localStorage.getItem('paisa_api_key')||'';
+  if(!apiKey){
+    document.getElementById('ai-search-result').style.display='block';
+    document.getElementById('ai-search-result').textContent='⚠ Add your Anthropic API key in More → Smart Import API Key to use AI search.';
+    return;
+  }
+  const resultEl=document.getElementById('ai-search-result');
+  resultEl.style.display='block';
+  resultEl.textContent='🔄 Thinking...';
+  const txnSummary=txns.slice(0,500).map(t=>`${t.date} ${t.type} ₹${t.amt} ${t.cat} "${t.desc}" ${t.mode}`).join('\n');
+  try{
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-6',max_tokens:300,
+        messages:[{role:'user',content:`You are a personal finance assistant. Answer this question based on the user's transactions below. Be concise, specific, use ₹ for amounts.
+
+Question: ${q}
+
+Transactions:
+${txnSummary}
+
+Answer directly and helpfully:`}]
+      })
+    });
+    const data=await resp.json();
+    const ans=data.content?.map(b=>b.text||'').join('').trim();
+    resultEl.textContent='🧠 '+ans;
+  }catch(e){resultEl.textContent='⚠ Could not connect. Check your API key.';}
+}
+
+
+// Spending Streak
+function updateStreak(){
+  const today=td();
+  let streak=parseInt(localStorage.getItem('paisa_streak')||'0');
+  const lastDay=localStorage.getItem('paisa_streak_last')||'';
+  const yesterday=new Date(); yesterday.setDate(yesterday.getDate()-1);
+  const yStr=yesterday.toISOString().slice(0,10);
+  if(lastDay===today) return streak; // already logged today
+  if(lastDay===yStr) streak++; // consecutive
+  else if(lastDay!==today) streak=1; // reset
+  localStorage.setItem('paisa_streak',streak);
+  localStorage.setItem('paisa_streak_last',today);
+  return streak;
+}
+function getStreak(){
+  const today=td();
+  const lastDay=localStorage.getItem('paisa_streak_last')||'';
+  const yesterday=new Date(); yesterday.setDate(yesterday.getDate()-1);
+  const yStr=yesterday.toISOString().slice(0,10);
+  // If last log was not today or yesterday, streak is 0
+  if(lastDay!==today&&lastDay!==yStr) return 0;
+  return parseInt(localStorage.getItem('paisa_streak')||'0');
+}
+
+
+function renderCoach(){
+  const ins=runFinancialCoach();
+  const el=document.getElementById('coach-cards');
+  if(!el)return;
+  el.innerHTML=ins.map(i=>`<div style="display:flex;gap:10px;align-items:flex-start;background:${i.type==='good'?'var(--green-p)':i.type==='warn'?'var(--red-p)':'var(--surface)'};border:1px solid ${i.type==='good'?'var(--green)':i.type==='warn'?'var(--red)':'var(--rule)'};border-radius:var(--r-lg);padding:12px 14px"><span style="font-size:18px;flex-shrink:0">${i.icon}</span><span style="font-size:13px;color:var(--ink2);line-height:1.5">${i.text}</span></div>`).join('');
+}
+// AI Financial Coach (offline, rule-based)
+function runFinancialCoach(){
+  const now=new Date();
+  const thisM=txns.filter(t=>sameM(t.date,now)&&t.type==='exp');
+  const lastMDate=new Date(now.getFullYear(),now.getMonth()-1,1);
+  const lastM=txns.filter(t=>sameM(t.date,lastMDate)&&t.type==='exp');
+  const insights=[];
+
+  // Category comparisons
+  const cats=[...new Set(thisM.map(t=>t.cat))];
+  cats.forEach(cat=>{
+    const thisAmt=thisM.filter(t=>t.cat===cat).reduce((s,t)=>s+t.amt,0);
+    const lastAmt=lastM.filter(t=>t.cat===cat).reduce((s,t)=>s+t.amt,0);
+    if(lastAmt>0&&thisAmt>0){
+      const pct=Math.round((thisAmt-lastAmt)/lastAmt*100);
+      if(pct>=20) insights.push({icon:'📈',text:`${cat} spend is up ${pct}% vs last month (₹${Math.round(lastAmt).toLocaleString('en-IN')} → ₹${Math.round(thisAmt).toLocaleString('en-IN')})`,type:'warn'});
+      if(pct<=-20) insights.push({icon:'📉',text:`Great! ${cat} spend is down ${Math.abs(pct)}% vs last month`,type:'good'});
+    }
+  });
+
+  // Top spender this month
+  const topCat=cats.sort((a,b)=>thisM.filter(t=>t.cat===b).reduce((s,t)=>s+t.amt,0)-thisM.filter(t=>t.cat===a).reduce((s,t)=>s+t.amt,0))[0];
+  if(topCat){
+    const topAmt=thisM.filter(t=>t.cat===topCat).reduce((s,t)=>s+t.amt,0);
+    insights.push({icon:'💡',text:`Your biggest spend this month: ${topCat} at ₹${Math.round(topAmt).toLocaleString('en-IN')}`,type:'info'});
+  }
+
+  // Savings rate
+  const income=txns.filter(t=>sameM(t.date,now)&&t.type==='inc').reduce((s,t)=>s+t.amt,0);
+  const totalExp=thisM.reduce((s,t)=>s+t.amt,0);
+  if(income>0){
+    const savRate=Math.round((income-totalExp)/income*100);
+    if(savRate>20) insights.push({icon:'🌟',text:`You're saving ${savRate}% of income this month. Excellent!`,type:'good'});
+    else if(savRate<0) insights.push({icon:'⚠️',text:`Spending exceeds income by ₹${Math.round(totalExp-income).toLocaleString('en-IN')} this month`,type:'warn'});
+    else insights.push({icon:'💰',text:`Saving ${savRate}% of income. Aim for 20%+ for financial freedom`,type:'info'});
+  }
+
+  // Weekend vs weekday spending
+  const wknd=thisM.filter(t=>{const d=new Date(t.date+'T12:00').getDay();return d===0||d===6;}).reduce((s,t)=>s+t.amt,0);
+  const wkdy=thisM.filter(t=>{const d=new Date(t.date+'T12:00').getDay();return d>0&&d<6;}).reduce((s,t)=>s+t.amt,0);
+  if(wknd>wkdy*0.6&&wknd>500) insights.push({icon:'🎉',text:`Weekend spending (₹${Math.round(wknd).toLocaleString('en-IN')}) is high — plan weekend activities mindfully`,type:'info'});
+
+  // No data
+  if(!insights.length) insights.push({icon:'📊',text:'Add more transactions this month to unlock personalized insights',type:'info'});
+
+  return insights.slice(0,4);
+}
+
+
+// End-of-Day Summary
+function initEODNotification(){
+  if(!('Notification' in window)) return;
+  const t=localStorage.getItem('paisa_eod_time')||'21:00';
+  scheduleEOD(t);
+}
+function scheduleEOD(t){
+  if(window._eodTimer) clearTimeout(window._eodTimer);
+  const [h,m]=t.split(':').map(Number);
+  const now=new Date();
+  const next=new Date(now.getFullYear(),now.getMonth(),now.getDate(),h,m,0);
+  if(next<=now) next.setDate(next.getDate()+1);
+  const ms=next-now;
+  window._eodTimer=setTimeout(()=>{
+    showEODSummary();
+    scheduleEOD(t); // reschedule for tomorrow
+  },ms);
+}
+function showEODSummary(){
+  const today=td();
+  const todayTxns=txns.filter(t=>t.date===today&&t.type==='exp');
+  if(!todayTxns.length) return;
+  const total=todayTxns.reduce((s,t)=>s+t.amt,0);
+  const byCat={};
+  todayTxns.forEach(t=>{byCat[t.cat]=(byCat[t.cat]||0)+t.amt;});
+  const lines=Object.entries(byCat).sort((a,b)=>b[1]-a[1]).map(([cat,amt])=>{
+    const ci=CATS.find(x=>x.n===cat)||{e:'📌'};
+    return `${ci.e} ${cat}: ₹${Math.round(amt).toLocaleString('en-IN')}`;
+  }).join('\n');
+  // Show in-app modal (works even without notification permission)
+  document.getElementById('eod-total').textContent='₹'+Math.round(total).toLocaleString('en-IN');
+  document.getElementById('eod-breakdown').textContent=lines;
+  document.getElementById('eod-modal').style.display='flex';
+  // Also try browser notification
+  if(Notification.permission==='granted'){
+    new Notification('Paisa — Daily Summary 🦁',{body:`Today you spent ₹${Math.round(total).toLocaleString('en-IN')}\n${lines}`,icon:'/paisa-app/icon-192.png'});
+  }
+}
+function requestEODPermission(){
+  if(!('Notification' in window)){toast('Notifications not supported');return;}
+  Notification.requestPermission().then(p=>{
+    toast(p==='granted'?'Notifications enabled ✓':'Permission denied');
+    if(p==='granted') initEODNotification();
+  });
+}
+function saveEODTime(){
+  const t=document.getElementById('eod-time-input')?.value||'21:00';
+  localStorage.setItem('paisa_eod_time',t);
+  scheduleEOD(t);
+  toast('Summary time set to '+t+' ✓');
+}
+
+
+// Smart Import Enhancements
+const MERCHANT_CAT={
+  swiggy:'Food',zomato:'Food',dominos:'Food',mcdonalds:'Food',kfc:'Food',
+  starbucks:'Food',cafe:'Food',restaurant:'Food',biryani:'Food',pizza:'Food',
+  uber:'Transport',ola:'Transport',rapido:'Transport',irctc:'Transport',
+  indigo:'Transport',petrol:'Transport',fuel:'Transport',parking:'Transport',
+  amazon:'Shopping',flipkart:'Shopping',myntra:'Shopping',ajio:'Shopping',
+  nykaa:'Shopping',meesho:'Shopping',max:'Shopping',zara:'Shopping',
+  apollo:'Health',medplus:'Health',netmeds:'Health',hospital:'Health',
+  clinic:'Health',pharmacy:'Health',doctor:'Health',
+  netflix:'Entertainment',hotstar:'Entertainment',spotify:'Entertainment',
+  prime:'Entertainment',pvr:'Entertainment',inox:'Entertainment',
+  jio:'Bills',airtel:'Bills',bsnl:'Bills',electricity:'Bills',bescom:'Bills',
+  zerodha:'Stocks',groww:'Stocks',upstox:'Stocks',
+  nandini:'Grocery',milk:'Grocery',blinkit:'Grocery',bigbasket:'Grocery',dmart:'Grocery',
+  salary:'Salary',
+};
+function getMerchantCat(txt){
+  const tl=txt.toLowerCase();
+  for(const [k,v] of Object.entries(MERCHANT_CAT)){if(tl.includes(k))return v;}
+  return null;
+}
+function autoDetectCategory(){
+  const desc=document.getElementById('desc')?.value||'';
+  if(!desc) return;
+  const cat=getMerchantCat(desc);
+  if(cat&&CATS.find(c=>c.n===cat)){selCat=cat;renderChips();toast(cat+' auto-detected 🎯');}
+}
+function getPredictions(amt){
+  if(!amt||amt.length<2) return [];
+  const matches=txns.filter(t=>String(t.amt)===String(amt)).slice(0,3);
+  return matches;
+}
+function showPredictions(){
+  const amt=document.getElementById('amt')?.value||'';
+  const pred=getPredictions(amt);
+  let el=document.getElementById('amt-predictions');
+  if(!el){el=document.createElement('div');el.id='amt-predictions';el.style.cssText='margin:0 20px 10px;display:flex;flex-wrap:wrap;gap:6px;';document.getElementById('amt').closest('.amt-wrap').after(el);}
+  if(!pred.length){el.innerHTML='';return;}
+  el.innerHTML=pred.map(t=>`<button onclick="applyPrediction(${t.id})" style="padding:5px 10px;border-radius:99px;border:1px solid var(--gold);background:var(--gold-pale);font-size:12px;color:var(--gold-d);cursor:pointer;font-family:inherit">${t.cat} · "${t.desc}" · ${t.mode}</button>`).join('');
+}
+function applyPrediction(id){
+  const t=txns.find(x=>x.id===id);if(!t)return;
+  document.getElementById('desc').value=t.desc;
+  const modeEl=document.getElementById('mode');
+  if(modeEl)[...modeEl.options].forEach(o=>{if(o.value===t.mode||o.text===t.mode)o.selected=true;});
+  setType(t.type);selCat=t.cat;renderChips();
+  document.getElementById('amt-predictions').innerHTML='';
+  toast('Pre-filled from history ✓');
+}
+function applyPredictionId(id){applyPrediction(id);}
+
+// Daily Inspiration
+function saveInspireLines(){
+  const raw=document.getElementById('inspire-lines-input')?.value||'';
+  const lines=raw.split('\n').map(l=>l.trim()).filter(Boolean);
+  localStorage.setItem('paisa_inspire_lines',JSON.stringify(lines));
+  if(lines.length) pickRandomInspire();
+  toast('Inspiration saved ✓');
+}
+function pickRandomInspire(){
+  const lines=JSON.parse(localStorage.getItem('paisa_inspire_lines')||'[]');
+  if(!lines.length) return;
+  const pick=lines[Math.floor(Math.random()*lines.length)];
+  localStorage.setItem('paisa_inspire_msg',pick);
+  const el=document.getElementById('inspire-current-display');
+  if(el) el.textContent=pick;
+  renderHome();
+}
+function initInspireDaily(){
+  // Pick a new random inspire each day
+  const last=localStorage.getItem('paisa_inspire_date')||'';
+  const today=td();
+  if(last!==today){
+    const lines=JSON.parse(localStorage.getItem('paisa_inspire_lines')||'[]');
+    if(lines.length){
+      const pick=lines[Math.floor(Math.random()*lines.length)];
+      localStorage.setItem('paisa_inspire_msg',pick);
+      localStorage.setItem('paisa_inspire_date',today);
+    }
+  }
+}
 
 // ===== SMART IMPORT =====
 let siMode='text', siResult=null, siImgB64=null;
