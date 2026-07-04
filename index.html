@@ -42,6 +42,36 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:#fafaf8;color:#0f0f0f
 #fab{display:none;}
 
 .hero{padding:24px 20px 0;}
+
+/* Beautiful hero card */
+.hero-card{margin:16px 20px 0;background:linear-gradient(135deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%);border-radius:20px;padding:22px 20px 18px;position:relative;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,.18);}
+.hero-card::before{content:'';position:absolute;top:-40px;right:-40px;width:150px;height:150px;background:rgba(200,169,110,.12);border-radius:50%;}
+.hero-card::after{content:'';position:absolute;bottom:-30px;left:-20px;width:100px;height:100px;background:rgba(200,169,110,.07);border-radius:50%;}
+.hero-greeting{font-size:13px;color:rgba(255,255,255,.6);letter-spacing:.04em;margin-bottom:4px;}
+.hero-name{font-size:18px;font-weight:600;color:#fff;margin-bottom:16px;}
+.hero-spent-label{font-size:11px;color:rgba(255,255,255,.5);letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px;}
+.hero-amount{font-family:'DM Mono',monospace;font-size:42px;font-weight:400;color:#fff;letter-spacing:-1px;line-height:1;}
+.hero-amount sup{font-size:20px;color:rgba(255,255,255,.6);vertical-align:super;}
+.hero-meta{font-size:12px;color:rgba(255,255,255,.45);margin-top:6px;}
+.hero-lion{position:absolute;right:18px;top:16px;font-size:36px;line-height:1;filter:drop-shadow(0 2px 8px rgba(0,0,0,.3));}
+.hero-inspire{font-size:12px;color:var(--gold);font-style:italic;margin-top:10px;line-height:1.5;max-width:200px;opacity:.9;}
+.hero-streak{display:inline-flex;align-items:center;gap:5px;background:rgba(200,169,110,.2);border:1px solid rgba(200,169,110,.4);border-radius:99px;padding:3px 10px;font-size:11px;font-weight:600;color:var(--gold);margin-top:8px;}
+
+
+/* Beautiful hero card */
+.hero-card{margin:16px 20px 0;background:linear-gradient(135deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%);border-radius:20px;padding:22px 20px 18px;position:relative;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,.18);}
+.hero-card::before{content:'';position:absolute;top:-40px;right:-40px;width:150px;height:150px;background:rgba(200,169,110,.12);border-radius:50%;}
+.hero-card::after{content:'';position:absolute;bottom:-30px;left:-20px;width:100px;height:100px;background:rgba(200,169,110,.07);border-radius:50%;}
+.hero-greeting{font-size:13px;color:rgba(255,255,255,.6);letter-spacing:.04em;margin-bottom:4px;}
+.hero-name{font-size:18px;font-weight:600;color:#fff;margin-bottom:16px;}
+.hero-spent-label{font-size:11px;color:rgba(255,255,255,.5);letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px;}
+.hero-amount{font-family:'DM Mono',monospace;font-size:42px;font-weight:400;color:#fff;letter-spacing:-1px;line-height:1;}
+.hero-amount sup{font-size:20px;color:rgba(255,255,255,.6);vertical-align:super;}
+.hero-meta{font-size:12px;color:rgba(255,255,255,.45);margin-top:6px;}
+.hero-lion{position:absolute;right:18px;top:16px;font-size:36px;line-height:1;filter:drop-shadow(0 2px 8px rgba(0,0,0,.3));}
+.hero-inspire{font-size:12px;color:var(--gold);font-style:italic;margin-top:10px;line-height:1.5;max-width:200px;opacity:.9;}
+.hero-streak{display:inline-flex;align-items:center;gap:5px;background:rgba(200,169,110,.2);border:1px solid rgba(200,169,110,.4);border-radius:99px;padding:3px 10px;font-size:11px;font-weight:600;color:var(--gold);margin-top:8px;}
+
 .hero-eyebrow{font-size:12px;color:var(--ink3);letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px;}
 .hero-amt{font-family:'DM Mono',monospace;font-size:46px;font-weight:400;letter-spacing:-1.5px;line-height:1;}
 .hero-amt sup{font-size:22px;color:var(--ink3);font-weight:300;vertical-align:super;}
@@ -299,12 +329,15 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:#fafaf8;color:#0f0f0f
 
     <!-- HOME -->
     <div class="screen active" id="s-home">
-      <div class="hero">
-        <div class="hero-eyebrow" id="greeting">Good morning</div><div style="position:absolute;right:22px;top:18px;font-size:34px">🦁</div>
-        <div class="hero-amt"><sup>₹</sup><span id="h-total">0</span></div>
-        <div class="hero-sub" id="h-month">spent this month</div>
-        <div id="inspire-msg" style="display:none;font-size:12px;color:var(--gold-d);font-style:italic;margin-top:8px;line-height:1.4;max-width:220px;"></div>
-        <div id="streak-badge" style="display:none;margin-top:8px;display:inline-flex;align-items:center;gap:5px;background:var(--gold-pale);border:1px solid var(--gold);border-radius:99px;padding:4px 10px;font-size:12px;font-weight:600;color:var(--gold-d)">🔥 <span id="streak-count">0</span> day streak</div>
+      <div class="hero-card">
+        <div class="hero-lion">🦁</div>
+        <div class="hero-greeting" id="greeting">Good morning</div>
+        <div class="hero-name" id="hero-name-lbl">Welcome back</div>
+        <div class="hero-spent-label">Spent this month</div>
+        <div class="hero-amount"><sup>₹</sup><span id="h-total">0</span></div>
+        <div class="hero-meta" id="h-month">Loading...</div>
+        <div id="inspire-msg" class="hero-inspire" style="display:none"></div>
+        <div id="streak-badge" class="hero-streak" style="display:none">🔥 <span id="streak-count">0</span> day streak</div>
       </div>
       <div class="kpi-grid">
         <div class="kpi"><div class="kpi-label">Today</div><div class="kpi-val r" id="k-today">₹0</div></div>
@@ -320,12 +353,12 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:#fafaf8;color:#0f0f0f
         <div class="kpi"><div class="kpi-label">Outstanding</div><div class="kpi-val r" id="cc-out">₹0</div></div>
         <div class="kpi"><div class="kpi-label">Available Limit</div><div class="kpi-val g" id="cc-avail">₹0</div></div>
       </div>
-      <div id="cc-card-actions" class="card-actions">
+      <div id="cc-card-actions" class="card-actions" style="padding-bottom:6px">
         <button class="save-btn ca-outline" onclick="openLimitModal()">Set Limit</button>
         <button class="save-btn ca-outline" onclick="addCardPayment()">Log Payment</button>
       </div>
-      <div id="cc-payments-head" class="sec-head" style="display:none"><h2>Card 1 Payments</h2></div>
-      <div class="feed" id="cc-payment-feed" style="display:none"></div>
+      <div id="cc-payments-head" style="display:none;padding:6px 20px 4px"><h2 style="font-size:11px;font-weight:500;color:var(--ink3);letter-spacing:.08em;text-transform:uppercase">Card 1 Payments</h2></div>
+      <div class="feed" id="cc-payment-feed" style="display:none;padding-bottom:4px"></div>
       <div id="cc2-section" class="sec-head"><h2 id="cc2-name-lbl">💳 Credit Card 2</h2><button onclick="renameCC(2)" style="font-size:12px;color:var(--ink3);background:none;border:none;cursor:pointer">Rename</button></div>
       <div id="cc2-kpi-grid" class="kpi-grid" style="margin-top:0;display:none">
         <div class="kpi"><div class="kpi-label">Card Limit</div><div class="kpi-val" id="cc2-limit">₹0</div></div>
@@ -334,12 +367,12 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:#fafaf8;color:#0f0f0f
         <div class="kpi"><div class="kpi-label">Outstanding</div><div class="kpi-val r" id="cc2-out">₹0</div></div>
         <div class="kpi"><div class="kpi-label">Available Limit</div><div class="kpi-val g" id="cc2-avail">₹0</div></div>
       </div>
-      <div id="cc2-card-actions" class="card-actions" style="display:none">
+      <div id="cc2-card-actions" class="card-actions" style="display:none;padding-bottom:6px">
         <button class="save-btn ca-outline" onclick="openLimit2Modal()">Set Limit</button>
         <button class="save-btn ca-outline" onclick="openPay2Modal()">Log Payment</button>
       </div>
-      <div id="cc2-payments-head" class="sec-head" style="display:none"><h2>Card 2 Payments</h2></div>
-      <div class="feed" id="cc2-payment-feed" style="display:none"></div>
+      <div id="cc2-payments-head" style="display:none;padding:6px 20px 4px"><h2 style="font-size:11px;font-weight:500;color:var(--ink3);letter-spacing:.08em;text-transform:uppercase">Card 2 Payments</h2></div>
+      <div class="feed" id="cc2-payment-feed" style="display:none;padding-bottom:4px"></div>
       <div class="sec-head"><h2>Total Spent</h2></div><div class="kpi-grid" style="margin-top:0"><div class="kpi" style="grid-column:1/-1"><div class="kpi-label" id="total-spent-label">This month · All payments</div><div class="kpi-val r" id="total-spent-home">₹0</div></div></div>
 <div class="total-spent-filters">
 <select class="chart-select" id="spent-range" onchange="renderHome()"><option value="month">Current Month</option><option value="3m">Last 3 Months</option><option value="6m">Last 6 Months</option><option value="year">Current Year</option></select>
@@ -387,7 +420,37 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:#fafaf8;color:#0f0f0f
 
     <!-- MORE -->
     <div class="screen" id="s-more">
-      <div class="sec-head" style="padding-top:20px"><h2>Profile</h2></div>
+
+      <!-- 1. TODAY'S SUMMARY QUICK ACCESS -->
+      <div style="padding:16px 20px 0">
+        <button onclick="showEODSummary()" style="width:100%;padding:16px;background:linear-gradient(135deg,#1a1a2e,#16213e);color:#fff;border:none;border-radius:16px;display:flex;align-items:center;gap:12px;cursor:pointer;font-family:inherit;text-align:left">
+          <div style="font-size:28px">🌙</div>
+          <div style="flex:1">
+            <div style="font-size:14px;font-weight:600">Today's Summary</div>
+            <div style="font-size:12px;color:rgba(255,255,255,.55);margin-top:2px">Tap to see what you spent today</div>
+          </div>
+          <div style="font-size:20px;color:rgba(255,255,255,.4)">›</div>
+        </button>
+      </div>
+
+      <!-- 2. SUMMARY STATS -->
+      <div class="sec-head" style="padding-top:20px"><h2>Summary</h2></div>
+      <div class="exp-grid" id="sum-grid"></div>
+
+      <!-- 3. MONTHLY BUDGET -->
+      <div class="sec-head"><h2>Monthly Budgets</h2><button id="bgt-edit-btn" onclick="toggleBudgetEdit()">Edit Budget</button></div>
+      <div id="budget-progress-section"></div>
+      <div id="bgt-edit-panel" style="display:none">
+        <div style="padding:0 20px 6px;font-size:13px;color:var(--ink3)">Select categories to track and set amounts:</div>
+        <div class="bgt-list" id="bgt-list"></div>
+        <div style="padding:10px 20px 6px;display:flex;gap:10px">
+          <button class="save-btn" onclick="saveBudgets()" style="margin:0;flex:1;background:var(--gold-d)">Save Budget</button>
+          <button class="save-btn" onclick="cancelBudgetEdit()" style="margin:0;flex:1;background:var(--surface);color:var(--ink);border:1px solid var(--rule)">Cancel</button>
+        </div>
+      </div>
+
+      <!-- 4. PROFILE -->
+      <div class="sec-head"><h2>Profile</h2></div>
       <div style="padding:0 20px 4px;display:flex;flex-direction:column;gap:10px;">
         <div>
           <label style="font-size:11px;color:var(--ink3);letter-spacing:.07em;text-transform:uppercase;display:block;margin-bottom:6px">Your name</label>
@@ -406,41 +469,8 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:#fafaf8;color:#0f0f0f
         </div>
       </div>
       <div style="height:8px"></div>
-      <div class="sec-head"><h2>Summary</h2></div>
-      <div class="exp-grid" id="sum-grid"></div>
-      <div class="sec-head"><h2>Download data</h2></div>
-      <div class="exp-card">
-        <div class="exp-row" onclick="xCSV()">
-          <div class="exp-ico" style="background:#edf7f3">📊</div>
-          <div class="exp-info"><div class="exp-name">CSV</div><div class="exp-desc">Open in Excel or Google Sheets</div></div>
-          <span class="arr">›</span>
-        </div>
-        <div class="exp-row" onclick="xJSON()">
-          <div class="exp-ico" style="background:#edf2fc">🗂️</div>
-          <div class="exp-info"><div class="exp-name">JSON backup</div><div class="exp-desc">Full backup — import anytime</div></div>
-          <span class="arr">›</span>
-        </div>
-        <div class="exp-row" onclick="xPDF()">
-          <div class="exp-ico" style="background:#fdf6ea">📄</div>
-          <div class="exp-info"><div class="exp-name">PDF report</div><div class="exp-desc">Printable monthly summary</div></div>
-          <span class="arr">›</span>
-        </div>
-        <div class="exp-row" onclick="doImport()">
-          <div class="exp-ico" style="background:#fdf0ee">📥</div>
-          <div class="exp-info"><div class="exp-name">Import JSON</div><div class="exp-desc">Restore from a backup file</div></div>
-          <span class="arr">›</span>
-        </div>
-      </div>
-      <div class="sec-head"><h2>Monthly Budgets</h2><button id="bgt-edit-btn" onclick="toggleBudgetEdit()">Edit Budget</button></div>
-      <div id="budget-progress-section"></div>
-      <div id="bgt-edit-panel" style="display:none">
-        <div style="padding:0 20px 6px;font-size:13px;color:var(--ink3)">Select categories to track and set amounts:</div>
-        <div class="bgt-list" id="bgt-list"></div>
-        <div style="padding:10px 20px 6px;display:flex;gap:10px">
-          <button class="save-btn" onclick="saveBudgets()" style="margin:0;flex:1;background:var(--gold-d)">Save Budget</button>
-          <button class="save-btn" onclick="cancelBudgetEdit()" style="margin:0;flex:1;background:var(--surface);color:var(--ink);border:1px solid var(--rule)">Cancel</button>
-        </div>
-      </div>
+
+      <!-- 5. CREDIT CARDS -->
       <div class="sec-head"><h2>Credit Cards</h2></div>
       <div class="toggle-row">
         <div>
@@ -464,12 +494,8 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:#fafaf8;color:#0f0f0f
         </label>
       </div>
       <div style="height:10px"></div>
-      <div class="sec-head"><h2>Smart Import</h2></div>
-      <div style="padding:0 20px 12px;">
-        <label style="font-size:11px;color:var(--ink3);letter-spacing:.07em;text-transform:uppercase;display:block;margin-bottom:6px">Anthropic API Key (for screenshot reading)</label>
-        <input id="si-api-key-input" type="password" placeholder="sk-ant-..." style="width:100%;padding:11px 14px;border:1px solid var(--rule);border-radius:var(--r);background:var(--paper);color:var(--ink);font-family:inherit;font-size:13px;outline:none;" oninput="saveAPIKey()">
-        <div style="font-size:11px;color:var(--ink3);margin-top:6px;line-height:1.5">Used only for screenshot OCR. Stored locally on your device. Get yours at <b>console.anthropic.com</b></div>
-      </div>
+
+      <!-- 6. END OF DAY SUMMARY SETTINGS -->
       <div class="sec-head"><h2>End-of-Day Summary</h2></div>
       <div style="padding:0 20px 12px;display:flex;flex-direction:column;gap:8px">
         <div style="display:flex;gap:10px;align-items:center">
@@ -477,17 +503,56 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:#fafaf8;color:#0f0f0f
           <button class="save-btn" onclick="saveEODTime()" style="margin:0;width:auto;padding:10px 16px;font-size:13px">Set Time</button>
         </div>
         <button class="save-btn" onclick="requestEODPermission()" style="margin:0;background:var(--surface);color:var(--ink);border:1px solid var(--rule);font-size:13px;padding:11px">🔔 Enable Notifications</button>
-        <button class="save-btn" onclick="showEODSummary()" style="margin:0;background:var(--surface);color:var(--ink);border:1px solid var(--rule);font-size:13px;padding:11px">👁 Preview Today's Summary</button>
       </div>
+
+      <!-- 7. SMART IMPORT -->
+      <div class="sec-head"><h2>Smart Import</h2></div>
+      <div style="padding:0 20px 12px;">
+        <label style="font-size:11px;color:var(--ink3);letter-spacing:.07em;text-transform:uppercase;display:block;margin-bottom:6px">Anthropic API Key (for screenshot reading)</label>
+        <input id="si-api-key-input" type="password" placeholder="sk-ant-..." style="width:100%;padding:11px 14px;border:1px solid var(--rule);border-radius:var(--r);background:var(--paper);color:var(--ink);font-family:inherit;font-size:13px;outline:none;" oninput="saveAPIKey()">
+        <div style="font-size:11px;color:var(--ink3);margin-top:6px;line-height:1.5">Used only for screenshot OCR. Stored locally on your device. Get yours at <b>console.anthropic.com</b></div>
+      </div>
+
+      <!-- 8. SECURITY -->
       <div class="sec-head"><h2>Security</h2></div>
       <div style="padding:0 20px 12px">
         <button class="save-btn" onclick="changePINFromMore()" style="width:100%;margin:0;background:var(--surface);color:var(--ink);border:1px solid var(--rule)">🔑 Change PIN</button>
       </div>
+
+      <!-- 9. DATA -->
       <div class="sec-head"><h2>Data</h2></div>
       <div class="danger-section">
         <button class="danger-btn" onclick="clearAll()">Clear all transactions</button>
       </div>
+
+      <!-- 10. DOWNLOAD DATA -->
+      <div class="sec-head"><h2>Download data</h2></div>
+      <div class="exp-card">
+        <div class="exp-row" onclick="xCSV()">
+          <div class="exp-ico" style="background:#edf7f3">📊</div>
+          <div class="exp-info"><div class="exp-name">CSV</div><div class="exp-desc">Open in Excel or Google Sheets</div></div>
+          <span class="arr">›</span>
+        </div>
+        <div class="exp-row" onclick="xJSON()">
+          <div class="exp-ico" style="background:#edf2fc">🗂️</div>
+          <div class="exp-info"><div class="exp-name">JSON backup</div><div class="exp-desc">Full backup — import anytime</div></div>
+          <span class="arr">›</span>
+        </div>
+        <div class="exp-row" onclick="xPDF()">
+          <div class="exp-ico" style="background:#fdf6ea">📄</div>
+          <div class="exp-info"><div class="exp-name">PDF report</div><div class="exp-desc">Printable monthly summary</div></div>
+          <span class="arr">›</span>
+        </div>
+        <div class="exp-row" onclick="doImport()">
+          <div class="exp-ico" style="background:#fdf0ee">📥</div>
+          <div class="exp-info"><div class="exp-name">Import JSON</div><div class="exp-desc">Restore from a backup file</div></div>
+          <span class="arr">›</span>
+        </div>
+      </div>
+      <div style="height:16px"></div>
+
     </div>
+
   </div>
 
   <nav id="nav">
@@ -939,7 +1004,8 @@ function renderHome(){
   const now=new Date(),h=now.getHours();
   const uname=localStorage.getItem('paisa_username')||'';
   const greet=h<12?'Good morning':h<17?'Good afternoon':'Good evening';
-  document.getElementById('greeting').textContent=uname?greet+', '+uname:greet;
+  document.getElementById('greeting').textContent=greet;
+  const hnl=document.getElementById('hero-name-lbl');if(hnl)hnl.textContent=uname?'Hello, '+uname+' 👋':'Welcome back';
   const insp=localStorage.getItem('paisa_inspire_msg')||'';
   const inspEl=document.getElementById('inspire-msg');
   if(inspEl){inspEl.textContent=insp;inspEl.style.display=insp?'block':'none';}
@@ -1031,14 +1097,29 @@ function rowHTML(t){
 // All
 function renderAll(){
   const months=[...new Set(txns.map(t=>t.date.slice(0,7)))].sort().reverse();
-  const sel=document.getElementById('mfilter'),cur=sel.value;
-  sel.innerHTML='<option value="">All time</option>'+months.map(m=>{
+  const sel=document.getElementById('mfilter'),cur=sel?sel.value:'';
+  if(sel){sel.innerHTML='<option value="">All time</option>'+months.map(m=>{
     const lbl=new Date(m+'-15').toLocaleString('en-IN',{month:'long',year:'numeric'});
     return`<option value="${m}"${m===cur?' selected':''}>${lbl}</option>`;
-  }).join('');
-  const filter=sel.value,data=filter?txns.filter(t=>t.date.startsWith(filter)):txns;
+  }).join('');}
+  const monthFilter=sel?sel.value:'';
+  const q=(document.getElementById('search-inp')?.value||'').toLowerCase().trim();
+  const clearBtn=document.getElementById('search-clear');
+  if(clearBtn) clearBtn.style.display=q?'block':'none';
+  let data=txns;
+  if(monthFilter) data=data.filter(t=>t.date.startsWith(monthFilter));
+  if(q) data=data.filter(t=>
+    (t.desc||'').toLowerCase().includes(q)||
+    (t.cat||'').toLowerCase().includes(q)||
+    (t.mode||'').toLowerCase().includes(q)||
+    String(t.amt).includes(q)||
+    (t.date||'').includes(q)
+  );
   const feed=document.getElementById('all-feed');
-  if(!data.length){feed.innerHTML=`<div class="empty"><div class="ei">🔍</div><p>No transactions</p><small>Try a different filter</small></div>`;return;}
+  if(!data.length){
+    feed.innerHTML=`<div class="empty"><div class="ei">🔍</div><p>${q?'No results for "'+q+'"':'No transactions'}</p><small>${q?'Try different keywords':'Add a transaction to get started'}</small></div>`;
+    return;
+  }
   const groups={};
   data.forEach(t=>{if(!groups[t.date])groups[t.date]=[];groups[t.date].push(t);});
   feed.innerHTML=Object.keys(groups).sort().reverse().map(date=>{
@@ -1050,7 +1131,7 @@ function renderAll(){
         <div class="tr" style="padding-right:6px">
           <div class="ti" style="background:${C(t.cat).bg}" onclick="openSheet(${t.id})">${C(t.cat).e}</div>
           <div class="tb" onclick="openSheet(${t.id})"><div class="tn">${t.desc}</div><div class="tm">${t.cat} · ${t.mode}</div></div>
-          <div class="ta${t.type==='inc'?' inc':''}" onclick="openSheet(${t.id})">${t.type==='inc'?'+':t.type==='sav'?'🏦':'−'}${fmt(t.amt)}</div>
+          <div class="ta${t.type==='inc'?' inc':t.type==='sav'?' sav':''}" onclick="openSheet(${t.id})">${t.type==='inc'?'+':t.type==='sav'?'🏦':'−'}${fmt(t.amt)}</div>
           <button class="del-btn" onclick="del(${t.id})">×</button>
         </div>`).join('')}</div></div>`;
   }).join('');
@@ -1605,9 +1686,13 @@ function applyPredictionId(id){applyPrediction(id);}
 function saveInspireLines(){
   const raw=document.getElementById('inspire-lines-input')?.value||'';
   const lines=raw.split('\n').map(l=>l.trim()).filter(Boolean);
+  if(!lines.length){toast('Add at least one line');return;}
   localStorage.setItem('paisa_inspire_lines',JSON.stringify(lines));
-  if(lines.length) pickRandomInspire();
-  toast('Inspiration saved ✓');
+  const cur=localStorage.getItem('paisa_inspire_msg')||'';
+  if(!cur||!lines.includes(cur)) pickRandomInspire();
+  const el=document.getElementById('inspire-current-display');
+  if(el) el.textContent=localStorage.getItem('paisa_inspire_msg')||'';
+  toast('Inspiration lines saved ✓');
 }
 function pickRandomInspire(){
   const lines=JSON.parse(localStorage.getItem('paisa_inspire_lines')||'[]');
