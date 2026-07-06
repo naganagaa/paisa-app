@@ -1,4 +1,4 @@
-const CACHE = 'paisa-v6';
+const CACHE = 'paisa-v8';
 const ASSETS = [
   '/paisa-app/',
   '/paisa-app/index.html',
