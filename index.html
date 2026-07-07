@@ -41,6 +41,22 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:#fafaf8;color:#0f0f0f
 .nb.on svg{stroke-width:2.2;}
 #fab{display:none;}
 
+/* Filter chips */
+.filter-chip{padding:6px 12px;border-radius:99px;border:1.5px solid var(--rule);background:var(--surface);color:var(--ink2);font-family:inherit;font-size:12px;font-weight:500;cursor:pointer;white-space:nowrap;transition:all .15s;}
+.filter-chip:active,.filter-chip.on{background:var(--ink);color:#fff;border-color:var(--ink);}
+
+/* Inspire line cards */
+.inspire-card{display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--surface);border:1.5px solid var(--rule);border-radius:var(--r-lg);cursor:pointer;transition:all .15s;}
+.inspire-card.selected{background:var(--gold-pale);border-color:var(--gold);}
+.inspire-card .ic-radio{width:18px;height:18px;border-radius:50%;border:2px solid var(--rule);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .15s;}
+.inspire-card.selected .ic-radio{border-color:var(--gold-d);background:var(--gold-d);}
+.inspire-card.selected .ic-radio::after{content:'';width:6px;height:6px;border-radius:50%;background:#fff;}
+.inspire-card .ic-text{flex:1;font-size:13px;line-height:1.5;color:var(--ink2);}
+.inspire-card.selected .ic-text{color:var(--gold-d);font-style:italic;}
+.inspire-card .ic-del{width:28px;height:28px;border-radius:50%;border:none;background:none;color:var(--ink3);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.inspire-card .ic-del:active{background:var(--red-p);color:var(--red);}
+
+
 .hero{padding:24px 20px 0;}
 
 /* Beautiful hero card */
@@ -333,9 +349,8 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:#fafaf8;color:#0f0f0f
         <div class="hero-lion">🦁</div>
         <div class="hero-greeting" id="greeting">Good morning</div>
         <div class="hero-name" id="hero-name-lbl">Welcome back</div>
-        <div class="hero-spent-label">Spent this month</div>
         <div class="hero-amount"><sup>₹</sup><span id="h-total">0</span></div>
-        <div class="hero-meta" id="h-month">Loading...</div>
+        <div class="hero-meta" id="h-month"></div>
         <div id="inspire-msg" class="hero-inspire" style="display:none"></div>
         <div id="streak-badge" class="hero-streak" style="display:none">🔥 <span id="streak-count">0</span> day streak</div>
       </div>
@@ -397,15 +412,40 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:#fafaf8;color:#0f0f0f
 
     <!-- ALL -->
     <div class="screen" id="s-all">
-      <div style="padding:16px 20px 0">
-        <div style="display:flex;gap:8px;align-items:center;background:var(--surface);border:1.5px solid var(--rule);border-radius:var(--r-lg);padding:10px 14px;transition:border-color .15s" id="search-wrap">
-          <span style="font-size:16px;color:var(--ink3)">🔍</span>
-          <input id="search-inp" type="text" placeholder="Search transactions..." style="flex:1;border:none;background:none;font-family:inherit;font-size:14px;color:var(--ink);outline:none;" oninput="renderAll()" onfocus="document.getElementById('search-wrap').style.borderColor='var(--gold)'" onblur="document.getElementById('search-wrap').style.borderColor='var(--rule)'">
-          <button id="search-clear" onclick="document.getElementById('search-inp').value='';renderAll()" style="display:none;background:none;border:none;cursor:pointer;color:var(--ink3);font-size:18px">×</button>
+      <div style="padding:14px 20px 0">
+        <!-- Search mode toggle -->
+        <div style="display:flex;background:var(--rule2);border-radius:99px;padding:3px;margin-bottom:10px;width:fit-content">
+          <button id="srch-tab-quick" onclick="switchSearchMode('quick')" style="padding:6px 16px;border-radius:99px;border:none;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;background:var(--ink);color:#fff;transition:all .15s">🔍 Search</button>
+          <button id="srch-tab-ai" onclick="switchSearchMode('ai')" style="padding:6px 16px;border-radius:99px;border:none;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;background:none;color:var(--ink3);transition:all .15s">🧠 Ask AI</button>
         </div>
-        <div style="margin-top:8px;display:flex;gap:6px;align-items:center">
-          <input id="ai-search-inp" type="text" placeholder="🧠 Ask anything: 'Goa trip', 'son birthday'..." style="flex:1;padding:9px 12px;border:1.5px solid var(--rule);border-radius:var(--r-lg);background:var(--paper);font-family:inherit;font-size:13px;color:var(--ink);outline:none;" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--rule)'" onkeydown="if(event.key==='Enter')runAISearch()">
-          <button onclick="runAISearch()" style="padding:9px 14px;background:var(--ink);color:#fff;border:none;border-radius:var(--r-lg);font-family:inherit;font-size:13px;cursor:pointer;white-space:nowrap">Ask AI</button>
+        <!-- Quick search -->
+        <div id="srch-quick-panel">
+          <div style="display:flex;align-items:center;background:var(--surface);border:1.5px solid var(--rule);border-radius:var(--r-lg);padding:4px 4px 4px 14px;gap:8px;transition:border-color .15s" id="search-wrap"
+            onfocusin="this.style.borderColor='var(--gold)'" onfocusout="this.style.borderColor='var(--rule)'">
+            <svg style="width:16px;height:16px;flex-shrink:0;stroke:var(--ink3);fill:none;stroke-width:2;stroke-linecap:round" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input id="search-inp" type="text" placeholder="Amount, category, merchant, date…" style="flex:1;border:none;background:none;font-family:inherit;font-size:14px;color:var(--ink);outline:none;padding:8px 0;" oninput="renderAll()">
+            <button id="search-clear" onclick="document.getElementById('search-inp').value='';renderAll()" style="display:none;width:32px;height:32px;border-radius:99px;background:var(--rule2);border:none;cursor:pointer;color:var(--ink3);font-size:16px;flex-shrink:0">×</button>
+          </div>
+          <!-- Quick filter chips -->
+          <div style="display:flex;gap:6px;margin-top:8px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none">
+            <button onclick="quickFilter('today')" class="filter-chip">Today</button>
+            <button onclick="quickFilter('week')" class="filter-chip">This week</button>
+            <button onclick="quickFilter('food')" class="filter-chip">🍔 Food</button>
+            <button onclick="quickFilter('shopping')" class="filter-chip">🛍️ Shopping</button>
+            <button onclick="quickFilter('upi')" class="filter-chip">UPI</button>
+            <button onclick="quickFilter('credit')" class="filter-chip">💳 Credit Card</button>
+          </div>
+        </div>
+        <!-- AI search -->
+        <div id="srch-ai-panel" style="display:none">
+          <div style="display:flex;gap:8px;align-items:center">
+            <input id="ai-search-inp" type="text" placeholder="e.g. Goa trip, son birthday, last laptop…"
+              style="flex:1;padding:12px 14px;border:1.5px solid var(--rule);border-radius:var(--r-lg);background:var(--paper);font-family:inherit;font-size:14px;color:var(--ink);outline:none;transition:border-color .15s"
+              onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--rule)'"
+              onkeydown="if(event.key==='Enter')runAISearch()">
+            <button onclick="runAISearch()" style="width:44px;height:44px;background:var(--ink);color:#fff;border:none;border-radius:var(--r-lg);cursor:pointer;font-size:18px;flex-shrink:0">→</button>
+          </div>
+          <div style="font-size:11px;color:var(--ink3);margin-top:6px;padding:0 2px">Uses AI · ~₹0.10 per query · Needs API key in More</div>
         </div>
         <div id="ai-search-result" style="display:none;margin-top:10px;padding:12px 14px;background:var(--gold-pale);border:1.5px solid var(--gold);border-radius:var(--r-lg);font-size:13px;line-height:1.6;color:var(--ink2)"></div>
       </div>
@@ -457,15 +497,22 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:#fafaf8;color:#0f0f0f
           <input id="profile-name" type="text" placeholder="e.g. Arjun" style="width:100%;padding:11px 14px;border:1px solid var(--rule);border-radius:var(--r);background:var(--paper);color:var(--ink);font-family:inherit;font-size:14px;outline:none;" oninput="saveProfile()">
         </div>
         <div>
-          <label style="font-size:11px;color:var(--ink3);letter-spacing:.07em;text-transform:uppercase;display:block;margin-bottom:6px">Daily Inspiration Lines</label>
-          <textarea id="inspire-lines-input" rows="4" placeholder="Add one line per row&#10;e.g. Save today, smile tomorrow&#10;Every rupee saved is a rupee earned" style="width:100%;padding:11px 14px;border:1px solid var(--rule);border-radius:var(--r);background:var(--paper);color:var(--ink);font-family:inherit;font-size:13px;outline:none;resize:none;line-height:1.6;"></textarea>
-          <div style="font-size:11px;color:var(--ink3);margin-top:4px">One line per row. App picks a random one each day.</div>
-          <button class="save-btn" onclick="saveInspireLines()" style="margin:8px 0 0;width:100%;padding:11px">Save Lines</button>
-          <div style="margin-top:10px">
-            <label style="font-size:11px;color:var(--ink3);text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:6px">Currently showing</label>
-            <div id="inspire-current-display" style="font-size:13px;color:var(--gold-d);font-style:italic;padding:10px 14px;background:var(--gold-pale);border-radius:var(--r);border:1px solid var(--gold);min-height:36px"></div>
-            <button onclick="pickRandomInspire()" style="font-size:12px;color:var(--gold-d);background:none;border:none;cursor:pointer;margin-top:6px">🔀 Pick random</button>
+          <label style="font-size:11px;color:var(--ink3);letter-spacing:.07em;text-transform:uppercase;display:block;margin-bottom:10px">✨ Daily Inspiration</label>
+          <!-- Add new line input -->
+          <div style="display:flex;gap:8px;margin-bottom:12px">
+            <input id="inspire-new-input" type="text" placeholder="Type your favourite line..." maxlength="120"
+              style="flex:1;padding:11px 14px;border:1.5px solid var(--rule);border-radius:var(--r-lg);background:var(--paper);color:var(--ink);font-family:inherit;font-size:13px;outline:none;transition:border-color .15s"
+              onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--rule)'"
+              onkeydown="if(event.key==='Enter')addInspireLine()">
+            <button onclick="addInspireLine()" style="padding:11px 16px;background:var(--ink);color:#fff;border:none;border-radius:var(--r-lg);font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap">＋ Add</button>
           </div>
+          <!-- Lines list -->
+          <div id="inspire-lines-list" style="display:flex;flex-direction:column;gap:6px;max-height:340px;overflow-y:auto;"></div>
+          <div style="display:flex;gap:8px;margin-top:10px">
+            <button onclick="pickRandomInspire()" style="flex:1;padding:10px;border:1.5px solid var(--gold);border-radius:var(--r-lg);background:var(--gold-pale);color:var(--gold-d);font-family:inherit;font-size:13px;font-weight:600;cursor:pointer">🔀 Pick random</button>
+            <button onclick="clearAllInspireLines()" style="padding:10px 14px;border:1.5px solid var(--rule);border-radius:var(--r-lg);background:none;color:var(--ink3);font-family:inherit;font-size:13px;cursor:pointer">Clear all</button>
+          </div>
+          <div id="inspire-current-display" style="display:none"></div>
         </div>
       </div>
       <div style="height:8px"></div>
@@ -714,7 +761,7 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:#fafaf8;color:#0f0f0f
     <p style="font-size:13px;color:var(--ink3);margin:0 0 20px">This will permanently delete all transactions for the current period. This cannot be undone.</p>
     <div class="modal-actions">
       <button class="save-btn" onclick="document.getElementById('clearModal').style.display='none'" style="background:var(--surface);color:var(--ink);border:1px solid var(--rule)">Cancel</button>
-      <button class="save-btn" onclick="document.getElementById('clearModal').style.display='none';txns=[];persist();renderHome();renderAll();if(document.getElementById('s-more').classList.contains('active'))renderMore();const sg=document.getElementById('sum-grid');if(sg){const now=new Date();sg.innerHTML='<div class=\"stat-box\"><div class=\"stat-label\">Transactions</div><div class=\"stat-val\">0</div></div><div class=\"stat-box\"><div class=\"stat-label\">This month</div><div class=\"stat-val\">0 txns</div></div><div class=\"stat-box\"><div class=\"stat-label\">Total spent</div><div class=\"stat-val\" style=\"color:var(--red)\">₹0</div></div><div class=\"stat-box\"><div class=\"stat-label\">Total income</div><div class=\"stat-val\" style=\"color:var(--green)\">₹0</div></div>';}toast('All transactions cleared');" style="background:#c0392b">Delete All</button>
+      <button class="save-btn" onclick="document.getElementById('clearModal').style.display='none';txns=[];cardPayments=[];card2Payments=[];localStorage.setItem('paisa_cc_payments','[]');localStorage.setItem('paisa_cc2_payments','[]');persist();renderHome();renderAll();if(document.getElementById('s-more').classList.contains('active'))renderMore();const sg=document.getElementById('sum-grid');if(sg){const now=new Date();sg.innerHTML='<div class=\"stat-box\"><div class=\"stat-label\">Transactions</div><div class=\"stat-val\">0</div></div><div class=\"stat-box\"><div class=\"stat-label\">This month</div><div class=\"stat-val\">0 txns</div></div><div class=\"stat-box\"><div class=\"stat-label\">Total spent</div><div class=\"stat-val\" style=\"color:var(--red)\">₹0</div></div><div class=\"stat-box\"><div class=\"stat-label\">Total income</div><div class=\"stat-val\" style=\"color:var(--green)\">₹0</div></div>';}toast('All transactions cleared');" style="background:#c0392b">Delete All</button>
     </div>
   </div>
 </div>
@@ -800,13 +847,18 @@ function addCustomCategory(){
     '💰','📈','🏦','💳','🎁','🌱','🐾','📦','✏️','🌍','❤️','⭐'
   ];
   catModal('Add category',
-    '<label>Category name</label><input id="catName" class="cat-input" placeholder="Enter category name"><label style="margin-top:10px;display:block">Choose an emoji</label><div class="emoji-grid" style="grid-template-columns:repeat(8,1fr);max-height:180px;overflow-y:auto;">'+
+    '<label>Category name</label><input id="catName" class="cat-input" placeholder="Enter category name"><label style="margin-top:10px;display:block">Choose an emoji</label><div id="emoji-picker-grid" class="emoji-grid" style="grid-template-columns:repeat(8,1fr);max-height:180px;overflow-y:auto;">'+
     es.map((e,i)=>'<button class="emoji '+(!i?'sel':'')+'" data-e="'+e+'">'+e+'</button>').join('')+'</div>',
     '<button class="cat-btn alt" onclick="closeCatModal()">Cancel</button><button class="cat-btn" onclick="saveNewCategory()">Save category</button>'
   );
-  document.querySelectorAll('.emoji').forEach(x=>x.onclick=()=>{document.querySelectorAll('.emoji').forEach(y=>y.classList.remove('sel'));x.classList.add('sel');});
+  document.getElementById('emoji-picker-grid').addEventListener('click',ev=>{
+    const btn=ev.target.closest('.emoji');
+    if(!btn) return;
+    document.querySelectorAll('#emoji-picker-grid .emoji').forEach(y=>y.classList.remove('sel'));
+    btn.classList.add('sel');
+  });
 }
-function saveNewCategory(){let n=document.getElementById('catName').value.trim(),e=document.querySelector('.emoji.sel').dataset.e;if(!n)return toast('Enter a category name');if(CATS.some(c=>c.n.toLowerCase()==n.toLowerCase()))return toast('Category already exists');CATS.push({n:n,e:e,c:'#6b7280',bg:'#f3f4f6'});saveCustomCategories();if(cType==='inc'){INC_CATS.push(n);saveIncCats();}else if(cType==='sav'){SAV_CATS.push(n);saveSavCats();}selCat=n;renderChips();closeCatModal();toast('Category added ✓')}
+function saveNewCategory(){let n=document.getElementById('catName').value.trim(),e=(document.querySelector('#emoji-picker-grid .emoji.sel')||document.querySelector('.emoji.sel'))?.dataset.e||'📌';if(!n)return toast('Enter a category name');if(CATS.some(c=>c.n.toLowerCase()==n.toLowerCase()))return toast('Category already exists');CATS.push({n:n,e:e,c:'#6b7280',bg:'#f3f4f6'});saveCustomCategories();if(cType==='inc'){INC_CATS.push(n);saveIncCats();}else if(cType==='sav'){SAV_CATS.push(n);saveSavCats();}selCat=n;renderChips();closeCatModal();toast('Category added ✓')}
 function manageCustomCategories(){let a=CATS.filter(c=>!DEFAULT_CAT_NAMES.includes(c.n));if(!a.length)return toast('No custom categories yet');catModal('Manage categories','<div class="cat-list">'+a.map(c=>'<div class="cat-row"><span>'+c.e+' '+c.n+'</span><span><button class="mini" onclick="renameCategory(\''+c.n+'\')">Rename</button><button class="mini del" onclick="deleteCategory(\''+c.n+'\')">Delete</button></span></div>').join('')+'</div>','<button class="cat-btn alt" onclick="closeCatModal()">Done</button>')}
 function renameCategory(o){catModal('Rename category','<label>New category name</label><input id="renameName" class="cat-input" value="'+o+'">','<button class="cat-btn alt" onclick="manageCustomCategories()">Cancel</button><button class="cat-btn" onclick="saveRename(\''+o+'\')">Save</button>')}
 function saveRename(o){let n=document.getElementById('renameName').value.trim();if(!n)return toast('Enter a category name');let c=CATS.find(x=>x.n===o);c.n=n;txns.forEach(t=>{if(t.cat===o)t.cat=n});persist();saveCustomCategories();selCat=n;renderChips();closeCatModal();toast('Category renamed ✓')}
@@ -1059,7 +1111,7 @@ function renderHome(){
   cpf.innerHTML=monthPayments.length ? monthPayments.map(p=>`<div class="payment-row"><div class="payment-icon">💳</div><div class="payment-info"><div class="payment-amount">${fmt(p.amt)}</div><div class="payment-meta">${p.date}${p.note?' · '+p.note:''}</div></div><button class="payment-delete" onclick="deleteCardPayment(${p.id})" title="Delete payment">×</button></div>`).join('') : '<div class="empty"><small>No payments logged yet</small></div>';
 
   document.getElementById('h-total').textContent=Math.round(spent).toLocaleString('en-IN');
-  document.getElementById('h-month').textContent='spent in '+now.toLocaleString('en-IN',{month:'long',year:'numeric'});
+  document.getElementById('h-month').textContent=now.toLocaleString('en-IN',{month:'long',year:'numeric'});
   document.getElementById('k-today').textContent=fmt(txns.filter(t=>t.type==='exp'&&t.mode!=='Credit Card 1'&&t.mode!=='Credit Card 2'&&t.mode!=='Credit Card'&&sameD(t.date)).reduce((s,t)=>s+t.amt,0));
   document.getElementById('k-week').textContent=fmt(txns.filter(t=>t.type==='exp'&&t.mode!=='Credit Card 1'&&t.mode!=='Credit Card 2'&&t.mode!=='Credit Card'&&sameW(t.date)).reduce((s,t)=>s+t.amt,0));
   document.getElementById('k-inc').textContent=fmt(income);
@@ -1264,10 +1316,7 @@ function renderMore(){
   // Init profile
   const pname=document.getElementById('profile-name');
   if(pname)pname.value=localStorage.getItem('paisa_username')||'';
-  const inspireTA=document.getElementById('inspire-lines-input');
-  if(inspireTA){const ls=JSON.parse(localStorage.getItem('paisa_inspire_lines')||'[]');inspireTA.value=ls.join('\n');}
-  const inspCur=document.getElementById('inspire-current-display');
-  if(inspCur)inspCur.textContent=localStorage.getItem('paisa_inspire_msg')||'No line selected yet';
+  renderInspireLines();
   // Init CC toggle
   const ccToggle=document.getElementById('cc-toggle');
   if(ccToggle) ccToggle.checked=isCCEnabled();
@@ -1444,7 +1493,7 @@ function renameCC(n){
   document.getElementById('renameModal').style.display='flex';
   setTimeout(()=>document.getElementById('rename-input').focus(),100);
 }
-function saveRename(){
+function saveCCRename(){
   const v=document.getElementById('rename-input').value.trim()||(_renameCard===1?'Credit Card 1':'Credit Card 2');
   localStorage.setItem('paisa_cc'+_renameCard+'_name',v);
   document.getElementById('cc'+_renameCard+'-name-lbl').textContent='💳 '+v;
@@ -1914,6 +1963,146 @@ function applySIResult(){
   },350);
 }
 // ===== END SMART IMPORT =====
+
+
+// Inspire line card UI
+function renderInspireLines(showAll){
+  const lines=JSON.parse(localStorage.getItem('paisa_inspire_lines')||'[]');
+  const cur=localStorage.getItem('paisa_inspire_msg')||'';
+  const el=document.getElementById('inspire-lines-list');
+  if(!el) return;
+  if(!lines.length){
+    el.innerHTML='<div style="text-align:center;padding:20px;color:var(--ink3);font-size:13px">No lines yet. Add your first inspiration above ✨</div>';
+    return;
+  }
+  const MAX=4;
+  const visible=lines.slice(0,MAX);
+  const rest=lines.length-MAX;
+  el.innerHTML=visible.map((line,i)=>`
+    <div class="inspire-card ${line===cur?'selected':''}" onclick="selectInspireLine(${i})">
+      <div class="ic-radio"></div>
+      <div class="ic-text">${line}</div>
+      <button class="ic-del" onclick="event.stopPropagation();deleteInspireLine(${i})" title="Remove">×</button>
+    </div>`).join('')
+  +(rest>0?`<button onclick="openInspireAll()" style="width:100%;padding:10px;border:1.5px dashed var(--rule);border-radius:var(--r-lg);background:none;color:var(--gold-d);font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;margin-top:2px">✨ See all ${lines.length} lines</button>`:'');
+}
+
+// Full-screen inspire modal
+function openInspireAll(){
+  const lines=JSON.parse(localStorage.getItem('paisa_inspire_lines')||'[]');
+  const cur=localStorage.getItem('paisa_inspire_msg')||'';
+  let modal=document.getElementById('inspire-all-modal');
+  if(!modal){
+    modal=document.createElement('div');
+    modal.id='inspire-all-modal';
+    modal.style.cssText='position:fixed;inset:0;background:var(--paper);z-index:3000;display:flex;flex-direction:column;';
+    document.body.appendChild(modal);
+  }
+  modal.innerHTML=`
+    <div style="display:flex;align-items:center;gap:12px;padding:18px 20px;border-bottom:1px solid var(--rule);position:sticky;top:0;background:var(--paper)">
+      <button onclick="document.getElementById('inspire-all-modal').style.display='none';renderInspireLines();" style="width:36px;height:36px;border-radius:50%;border:1px solid var(--rule);background:none;cursor:pointer;font-size:20px;color:var(--ink3)">‹</button>
+      <div style="flex:1"><div style="font-size:16px;font-weight:600">All Inspiration Lines</div><div style="font-size:12px;color:var(--ink3);margin-top:1px">${lines.length} line${lines.length!==1?'s':''} · tap to select</div></div>
+    </div>
+    <div style="flex:1;overflow-y:auto;padding:14px 20px;display:flex;flex-direction:column;gap:8px">
+      ${lines.map((line,i)=>`
+        <div class="inspire-card ${line===cur?'selected':''}" onclick="selectInspireLineAll(${i})">
+          <div class="ic-radio"></div>
+          <div class="ic-text">${line}</div>
+          <button class="ic-del" onclick="event.stopPropagation();deleteInspireLineAll(${i})" title="Remove">×</button>
+        </div>`).join('')}
+    </div>`;
+  modal.style.display='flex';
+}
+function selectInspireLineAll(i){
+  const lines=JSON.parse(localStorage.getItem('paisa_inspire_lines')||'[]');
+  if(!lines[i]) return;
+  localStorage.setItem('paisa_inspire_msg',lines[i]);
+  localStorage.setItem('paisa_inspire_date',td());
+  document.getElementById('inspire-all-modal').style.display='none';
+  renderInspireLines();
+  renderHome();
+  toast('Inspiration updated ✓');
+}
+function deleteInspireLineAll(i){
+  const lines=JSON.parse(localStorage.getItem('paisa_inspire_lines')||'[]');
+  const cur=localStorage.getItem('paisa_inspire_msg')||'';
+  if(lines[i]===cur) localStorage.removeItem('paisa_inspire_msg');
+  lines.splice(i,1);
+  localStorage.setItem('paisa_inspire_lines',JSON.stringify(lines));
+  openInspireAll(); // refresh modal
+  renderInspireLines();
+  renderHome();
+}
+function addInspireLine(){
+  const inp=document.getElementById('inspire-new-input');
+  const val=inp?.value.trim();
+  if(!val){toast('Type a line first');return;}
+  const lines=JSON.parse(localStorage.getItem('paisa_inspire_lines')||'[]');
+  if(lines.includes(val)){toast('Already added');return;}
+  lines.push(val);
+  localStorage.setItem('paisa_inspire_lines',JSON.stringify(lines));
+  inp.value='';
+  if(!localStorage.getItem('paisa_inspire_msg')) {
+    localStorage.setItem('paisa_inspire_msg',val);
+  }
+  renderInspireLines();
+  renderHome();
+  toast('Line added ✓');
+}
+function selectInspireLine(i){
+  const lines=JSON.parse(localStorage.getItem('paisa_inspire_lines')||'[]');
+  if(!lines[i]) return;
+  localStorage.setItem('paisa_inspire_msg',lines[i]);
+  localStorage.setItem('paisa_inspire_date',td());
+  renderInspireLines();
+  renderHome();
+  toast('Inspiration updated ✓');
+}
+function deleteInspireLine(i){
+  const lines=JSON.parse(localStorage.getItem('paisa_inspire_lines')||'[]');
+  const cur=localStorage.getItem('paisa_inspire_msg')||'';
+  if(lines[i]===cur) localStorage.removeItem('paisa_inspire_msg');
+  lines.splice(i,1);
+  localStorage.setItem('paisa_inspire_lines',JSON.stringify(lines));
+  renderInspireLines();
+  renderHome();
+}
+function clearAllInspireLines(){
+  if(!confirm('Clear all inspiration lines?')) return;
+  localStorage.removeItem('paisa_inspire_lines');
+  localStorage.removeItem('paisa_inspire_msg');
+  renderInspireLines();
+  renderHome();
+}
+
+// Search mode toggle
+function switchSearchMode(mode){
+  const isAI=mode==='ai';
+  document.getElementById('srch-quick-panel').style.display=isAI?'none':'block';
+  document.getElementById('srch-ai-panel').style.display=isAI?'block':'none';
+  document.getElementById('srch-tab-quick').style.background=isAI?'none':'var(--ink)';
+  document.getElementById('srch-tab-quick').style.color=isAI?'var(--ink3)':'#fff';
+  document.getElementById('srch-tab-ai').style.background=isAI?'var(--ink)':'none';
+  document.getElementById('srch-tab-ai').style.color=isAI?'#fff':'var(--ink3)';
+  if(!isAI) document.getElementById('search-inp')?.focus();
+  else document.getElementById('ai-search-inp')?.focus();
+}
+function quickFilter(type){
+  const inp=document.getElementById('search-inp');
+  if(!inp) return;
+  const map={today:td(),week:'',food:'food',shopping:'shopping',upi:'upi',credit:'credit card'};
+  if(type==='week'){
+    // set month filter to current month instead
+    const sel=document.getElementById('mfilter');
+    if(sel){sel.value='';renderAll();}
+    return;
+  }
+  inp.value=map[type]||type;
+  renderAll();
+  // Highlight active chip
+  document.querySelectorAll('.filter-chip').forEach(b=>b.classList.remove('on'));
+  event.target.classList.add('on');
+}
 
 // ===== PIN PROTECTION =====
 (function(){
