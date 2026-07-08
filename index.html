@@ -424,7 +424,7 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:#fafaf8;color:#0f0f0f
             onfocusin="this.style.borderColor='var(--gold)'" onfocusout="this.style.borderColor='var(--rule)'">
             <svg style="width:16px;height:16px;flex-shrink:0;stroke:var(--ink3);fill:none;stroke-width:2;stroke-linecap:round" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
             <input id="search-inp" type="text" placeholder="Amount, category, merchant, date…" style="flex:1;border:none;background:none;font-family:inherit;font-size:14px;color:var(--ink);outline:none;padding:8px 0;" oninput="renderAll()">
-            <button id="search-clear" onclick="document.getElementById('search-inp').value='';renderAll()" style="display:none;width:32px;height:32px;border-radius:99px;background:var(--rule2);border:none;cursor:pointer;color:var(--ink3);font-size:16px;flex-shrink:0">×</button>
+            <button id="search-clear" onclick="document.getElementById('search-inp').value='';window._weekFilter=false;document.querySelectorAll('.filter-chip').forEach(b=>b.classList.remove('on'));renderAll()" style="display:none;width:32px;height:32px;border-radius:99px;background:var(--rule2);border:none;cursor:pointer;color:var(--ink3);font-size:16px;flex-shrink:0">×</button>
           </div>
           <!-- Quick filter chips -->
           <div style="display:flex;gap:6px;margin-top:8px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none">
@@ -452,7 +452,7 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:#fafaf8;color:#0f0f0f
       <div class="sec-head" style="padding-top:20px"><h2>Transactions</h2></div>
       <div class="filter-row">
         <label>Month</label>
-        <select id="mfilter" onchange="renderAll()"><option value="">All time</option></select>
+        <select id="mfilter" onchange="window._weekFilter=false;document.querySelectorAll('.filter-chip').forEach(b=>b.classList.remove('on'));renderAll()"><option value="">All time</option></select>
       </div>
       <div style="height:14px"></div>
       <div id="all-feed" style="padding:0 20px;"></div>
@@ -498,20 +498,18 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:#fafaf8;color:#0f0f0f
         </div>
         <div>
           <label style="font-size:11px;color:var(--ink3);letter-spacing:.07em;text-transform:uppercase;display:block;margin-bottom:10px">✨ Daily Inspiration</label>
-          <!-- Add new line input -->
-          <div style="display:flex;gap:8px;margin-bottom:12px">
-            <input id="inspire-new-input" type="text" placeholder="Type your favourite line..." maxlength="120"
-              style="flex:1;padding:11px 14px;border:1.5px solid var(--rule);border-radius:var(--r-lg);background:var(--paper);color:var(--ink);font-family:inherit;font-size:13px;outline:none;transition:border-color .15s"
-              onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--rule)'"
-              onkeydown="if(event.key==='Enter')addInspireLine()">
-            <button onclick="addInspireLine()" style="padding:11px 16px;background:var(--ink);color:#fff;border:none;border-radius:var(--r-lg);font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap">＋ Add</button>
+          <!-- Currently showing -->
+          <div style="padding:12px 14px;background:var(--gold-pale);border:1.5px solid var(--gold);border-radius:var(--r-lg);display:flex;align-items:center;gap:10px;margin-bottom:10px">
+            <span style="font-size:20px">✨</span>
+            <span id="inspire-current-text" style="font-size:13px;color:var(--gold-d);font-style:italic;flex:1;line-height:1.5">No line selected yet</span>
           </div>
-          <!-- Lines list -->
-          <div id="inspire-lines-list" style="display:flex;flex-direction:column;gap:6px;max-height:340px;overflow-y:auto;"></div>
-          <div style="display:flex;gap:8px;margin-top:10px">
-            <button onclick="pickRandomInspire()" style="flex:1;padding:10px;border:1.5px solid var(--gold);border-radius:var(--r-lg);background:var(--gold-pale);color:var(--gold-d);font-family:inherit;font-size:13px;font-weight:600;cursor:pointer">🔀 Pick random</button>
-            <button onclick="clearAllInspireLines()" style="padding:10px 14px;border:1.5px solid var(--rule);border-radius:var(--r-lg);background:none;color:var(--ink3);font-family:inherit;font-size:13px;cursor:pointer">Clear all</button>
-          </div>
+          <!-- Single action button -->
+          <button onclick="openInspireAll()" style="width:100%;padding:14px;background:var(--ink);color:#fff;border:none;border-radius:var(--r-lg);font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">
+            <span>✨</span>
+            <span>View Inspiration</span>
+            <span id="inspire-count-badge" style="background:rgba(255,255,255,.2);color:#fff;border-radius:99px;padding:2px 8px;font-size:11px;font-weight:600"></span>
+          </button>
+          <div id="inspire-lines-list" style="display:none"></div>
           <div id="inspire-current-display" style="display:none"></div>
         </div>
       </div>
@@ -761,17 +759,27 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:#fafaf8;color:#0f0f0f
     <p style="font-size:13px;color:var(--ink3);margin:0 0 20px">This will permanently delete all transactions for the current period. This cannot be undone.</p>
     <div class="modal-actions">
       <button class="save-btn" onclick="document.getElementById('clearModal').style.display='none'" style="background:var(--surface);color:var(--ink);border:1px solid var(--rule)">Cancel</button>
-      <button class="save-btn" onclick="document.getElementById('clearModal').style.display='none';txns=[];cardPayments=[];card2Payments=[];localStorage.setItem('paisa_cc_payments','[]');localStorage.setItem('paisa_cc2_payments','[]');persist();renderHome();renderAll();if(document.getElementById('s-more').classList.contains('active'))renderMore();const sg=document.getElementById('sum-grid');if(sg){const now=new Date();sg.innerHTML='<div class=\"stat-box\"><div class=\"stat-label\">Transactions</div><div class=\"stat-val\">0</div></div><div class=\"stat-box\"><div class=\"stat-label\">This month</div><div class=\"stat-val\">0 txns</div></div><div class=\"stat-box\"><div class=\"stat-label\">Total spent</div><div class=\"stat-val\" style=\"color:var(--red)\">₹0</div></div><div class=\"stat-box\"><div class=\"stat-label\">Total income</div><div class=\"stat-val\" style=\"color:var(--green)\">₹0</div></div>';}toast('All transactions cleared');" style="background:#c0392b">Delete All</button>
+      <button class="save-btn" onclick="doConfirmedClearAll()" style="background:#c0392b">Delete All</button>
     </div>
   </div>
 </div>
-<div id="eod-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:2000;align-items:center;justify-content:center">
-  <div class="modal-card" style="text-align:center">
-    <div style="font-size:36px;margin-bottom:8px">🌙</div>
-    <h3 style="margin:0 0 4px">Today's Summary</h3>
-    <div style="font-size:28px;font-family:'DM Mono',monospace;font-weight:500;color:var(--red);margin:10px 0" id="eod-total">₹0</div>
-    <pre id="eod-breakdown" style="font-family:'DM Sans',sans-serif;font-size:13px;color:var(--ink2);line-height:1.8;text-align:left;white-space:pre-wrap;background:var(--rule2);padding:12px;border-radius:var(--r);margin:0 0 16px"></pre>
-    <button class="save-btn" onclick="document.getElementById('eod-modal').style.display='none'" style="margin:0;width:100%">Done</button>
+<div id="eod-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2000;align-items:flex-end;justify-content:center">
+  <div style="background:var(--paper);border-radius:24px 24px 0 0;width:100%;max-width:430px;padding:28px 20px 36px;max-height:85vh;overflow-y:auto;">
+    <!-- Header -->
+    <div style="text-align:center;margin-bottom:20px">
+      <div style="font-size:44px;margin-bottom:6px">🌙</div>
+      <div style="font-size:11px;font-weight:600;color:var(--ink3);letter-spacing:.1em;text-transform:uppercase" id="eod-date-lbl">Today</div>
+      <div style="font-size:13px;color:var(--ink3);margin-top:2px">Here's what you spent</div>
+    </div>
+    <!-- Big total -->
+    <div style="background:linear-gradient(135deg,#1a1a2e,#16213e);border-radius:16px;padding:20px 24px;text-align:center;margin-bottom:20px">
+      <div style="font-size:11px;color:rgba(255,255,255,.5);letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px">Total Spent</div>
+      <div style="font-family:'DM Mono',monospace;font-size:40px;font-weight:400;color:#fff;letter-spacing:-1px" id="eod-total">₹0</div>
+    </div>
+    <!-- Category breakdown -->
+    <div id="eod-breakdown" style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px"></div>
+    <!-- Done button -->
+    <button onclick="document.getElementById('eod-modal').style.display='none'" style="width:100%;padding:14px;background:var(--ink);color:#fff;border:none;border-radius:14px;font-family:inherit;font-size:15px;font-weight:600;cursor:pointer">Done</button>
   </div>
 </div>
 <div id="renameModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:2000;align-items:center;justify-content:center">
@@ -781,7 +789,7 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:#fafaf8;color:#0f0f0f
     <input id="rename-input" placeholder="e.g. Axis CC, HDFC Millennia" maxlength="20">
     <div class="modal-actions">
       <button class="save-btn" onclick="document.getElementById('renameModal').style.display='none'" style="background:var(--surface);color:var(--ink);border:1px solid var(--rule)">Cancel</button>
-      <button class="save-btn" onclick="saveRename()">Save</button>
+      <button class="save-btn" onclick="saveCCRename()">Save</button>
     </div>
   </div>
 </div>
@@ -860,8 +868,8 @@ function addCustomCategory(){
 }
 function saveNewCategory(){let n=document.getElementById('catName').value.trim(),e=(document.querySelector('#emoji-picker-grid .emoji.sel')||document.querySelector('.emoji.sel'))?.dataset.e||'📌';if(!n)return toast('Enter a category name');if(CATS.some(c=>c.n.toLowerCase()==n.toLowerCase()))return toast('Category already exists');CATS.push({n:n,e:e,c:'#6b7280',bg:'#f3f4f6'});saveCustomCategories();if(cType==='inc'){INC_CATS.push(n);saveIncCats();}else if(cType==='sav'){SAV_CATS.push(n);saveSavCats();}selCat=n;renderChips();closeCatModal();toast('Category added ✓')}
 function manageCustomCategories(){let a=CATS.filter(c=>!DEFAULT_CAT_NAMES.includes(c.n));if(!a.length)return toast('No custom categories yet');catModal('Manage categories','<div class="cat-list">'+a.map(c=>'<div class="cat-row"><span>'+c.e+' '+c.n+'</span><span><button class="mini" onclick="renameCategory(\''+c.n+'\')">Rename</button><button class="mini del" onclick="deleteCategory(\''+c.n+'\')">Delete</button></span></div>').join('')+'</div>','<button class="cat-btn alt" onclick="closeCatModal()">Done</button>')}
-function renameCategory(o){catModal('Rename category','<label>New category name</label><input id="renameName" class="cat-input" value="'+o+'">','<button class="cat-btn alt" onclick="manageCustomCategories()">Cancel</button><button class="cat-btn" onclick="saveRename(\''+o+'\')">Save</button>')}
-function saveRename(o){let n=document.getElementById('renameName').value.trim();if(!n)return toast('Enter a category name');let c=CATS.find(x=>x.n===o);c.n=n;txns.forEach(t=>{if(t.cat===o)t.cat=n});persist();saveCustomCategories();selCat=n;renderChips();closeCatModal();toast('Category renamed ✓')}
+function renameCategory(o){catModal('Rename category','<label>New category name</label><input id="renameName" class="cat-input" value="'+o+'">','<button class="cat-btn alt" onclick="manageCustomCategories()">Cancel</button><button class="cat-btn" onclick="saveCatRename(\''+o+'\')">Save</button>')}
+function saveCatRename(o){let n=document.getElementById('renameName').value.trim();if(!n)return toast('Enter a category name');let ct=CATS.find(x=>x.n===o);if(!ct)return toast('Category not found');ct.n=n;txns.forEach(t=>{if(t.cat===o)t.cat=n});persist();saveCustomCategories();selCat=n;renderChips();closeCatModal();toast('Category renamed ✓')}
 function deleteCategory(n){catModal('Delete category','<p>Delete <b>'+n+'</b>?</p>','<button class="cat-btn alt" onclick="manageCustomCategories()">Cancel</button><button class="cat-btn delmain" onclick="confirmDelete(\''+n+'\')">Delete</button>')}
 function confirmDelete(n){let c=CATS.find(x=>x.n===n);CATS.splice(CATS.indexOf(c),1);saveCustomCategories();const ii=INC_CATS.indexOf(n);if(ii>-1){INC_CATS.splice(ii,1);saveIncCats();}const si=SAV_CATS.indexOf(n);if(si>-1){SAV_CATS.splice(si,1);saveSavCats();}renderChips();closeCatModal();toast('Category removed ✓')}
 // v3 - all data persists in localStorage; never wiped on app update
@@ -1159,7 +1167,13 @@ function renderAll(){
   const clearBtn=document.getElementById('search-clear');
   if(clearBtn) clearBtn.style.display=q?'block':'none';
   let data=txns;
-  if(monthFilter) data=data.filter(t=>t.date.startsWith(monthFilter));
+  if(window._weekFilter){
+    const now2=new Date();
+    const dow=now2.getDay(); // 0=Sun
+    const daysBack=dow===0?6:dow-1; // Mon start
+    const sow=new Date(now2); sow.setDate(now2.getDate()-daysBack); sow.setHours(0,0,0,0);
+    data=data.filter(t=>new Date(t.date+'T12:00')>=sow);
+  } else if(monthFilter) data=data.filter(t=>t.date.startsWith(monthFilter));
   if(q) data=data.filter(t=>
     (t.desc||'').toLowerCase().includes(q)||
     (t.cat||'').toLowerCase().includes(q)||
@@ -1470,6 +1484,17 @@ function onImport(e){
   };r.readAsText(file);
 }
 function clearAll(){document.getElementById('clearModal').style.display='flex';}
+function doConfirmedClearAll(){
+  document.getElementById('clearModal').style.display='none';
+  txns=[];persist();
+  cardPayments=[];card2Payments=[];
+  localStorage.setItem('paisa_cc_payments','[]');
+  localStorage.setItem('paisa_cc2_payments','[]');
+  budgets={};localStorage.setItem('paisa_bdg','{}');
+  renderHome();renderAll();renderCharts();
+  if(document.getElementById('s-more').classList.contains('active')) renderMore();
+  toast('All transactions cleared ✓');
+}
 
 let toastT;
 function toast(msg){
@@ -1647,21 +1672,43 @@ function scheduleEOD(t){
 function showEODSummary(){
   const today=td();
   const todayTxns=txns.filter(t=>t.date===today&&t.type==='exp');
-  if(!todayTxns.length) return;
   const total=todayTxns.reduce((s,t)=>s+t.amt,0);
   const byCat={};
   todayTxns.forEach(t=>{byCat[t.cat]=(byCat[t.cat]||0)+t.amt;});
-  const lines=Object.entries(byCat).sort((a,b)=>b[1]-a[1]).map(([cat,amt])=>{
-    const ci=CATS.find(x=>x.n===cat)||{e:'📌'};
-    return `${ci.e} ${cat}: ₹${Math.round(amt).toLocaleString('en-IN')}`;
-  }).join('\n');
-  // Show in-app modal (works even without notification permission)
-  document.getElementById('eod-total').textContent='₹'+Math.round(total).toLocaleString('en-IN');
-  document.getElementById('eod-breakdown').textContent=lines;
+  // Date label
+  const dateEl=document.getElementById('eod-date-lbl');
+  if(dateEl){const d=new Date();dateEl.textContent=d.toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'});}
+  // Total
+  document.getElementById('eod-total').textContent=total>0?'₹'+Math.round(total).toLocaleString('en-IN'):'₹0';
+  // Breakdown cards
+  const bd=document.getElementById('eod-breakdown');
+  if(bd){
+    if(!todayTxns.length){
+      bd.innerHTML='<div style="text-align:center;padding:20px;color:var(--ink3);font-size:13px">No expenses logged today 🎉</div>';
+    } else {
+      const entries=Object.entries(byCat).sort((a,b)=>b[1]-a[1]);
+      bd.innerHTML=entries.map(([cat,amt],idx)=>{
+        const ci=CATS.find(x=>x.n===cat)||{e:'📌',c:'#6b7280',bg:'#f3f4f6'};
+        const pct=total>0?Math.round(amt/total*100):0;
+        return `<div style="display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--surface);border-radius:16px;border:1px solid var(--rule);box-shadow:0 2px 8px rgba(0,0,0,.04)">
+          <div style="width:46px;height:46px;border-radius:14px;background:${ci.bg};display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;box-shadow:0 2px 6px rgba(0,0,0,.06)">${ci.e}</div>
+          <div style="flex:1;min-width:0">
+            <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px">
+              <span style="font-size:14px;font-weight:600;color:var(--ink)">${cat}</span>
+              <span style="font-family:'DM Mono',monospace;font-size:14px;font-weight:500;color:${ci.c};flex-shrink:0;margin-left:8px">₹${Math.round(amt).toLocaleString('en-IN')}</span>
+            </div>
+            <div style="height:6px;background:var(--rule2);border-radius:3px;overflow:hidden">
+              <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,${ci.c}99,${ci.c});border-radius:3px;transition:width .8s cubic-bezier(.4,0,.2,1)"></div>
+            </div>
+            <div style="font-size:11px;color:var(--ink3);margin-top:3px;text-align:right">${pct}% of today</div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+  }
   document.getElementById('eod-modal').style.display='flex';
-  // Also try browser notification
-  if(Notification.permission==='granted'){
-    new Notification('Paisa — Daily Summary 🦁',{body:`Today you spent ₹${Math.round(total).toLocaleString('en-IN')}\n${lines}`,icon:'/paisa-app/icon-192.png'});
+  if(Notification.permission==='granted'&&total>0){
+    new Notification('Paisa — Daily Summary 🦁',{body:'Today you spent ₹'+Math.round(total).toLocaleString('en-IN'),icon:'/paisa-app/icon-192.png'});
   }
 }
 function requestEODPermission(){
@@ -1966,25 +2013,16 @@ function applySIResult(){
 
 
 // Inspire line card UI
-function renderInspireLines(showAll){
+function renderInspireLines(){
   const lines=JSON.parse(localStorage.getItem('paisa_inspire_lines')||'[]');
   const cur=localStorage.getItem('paisa_inspire_msg')||'';
-  const el=document.getElementById('inspire-lines-list');
-  if(!el) return;
-  if(!lines.length){
-    el.innerHTML='<div style="text-align:center;padding:20px;color:var(--ink3);font-size:13px">No lines yet. Add your first inspiration above ✨</div>';
-    return;
-  }
-  const MAX=4;
-  const visible=lines.slice(0,MAX);
-  const rest=lines.length-MAX;
-  el.innerHTML=visible.map((line,i)=>`
-    <div class="inspire-card ${line===cur?'selected':''}" onclick="selectInspireLine(${i})">
-      <div class="ic-radio"></div>
-      <div class="ic-text">${line}</div>
-      <button class="ic-del" onclick="event.stopPropagation();deleteInspireLine(${i})" title="Remove">×</button>
-    </div>`).join('')
-  +(rest>0?`<button onclick="openInspireAll()" style="width:100%;padding:10px;border:1.5px dashed var(--rule);border-radius:var(--r-lg);background:none;color:var(--gold-d);font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;margin-top:2px">✨ See all ${lines.length} lines</button>`:'');
+  // Update preview
+  const pt=document.getElementById('inspire-current-text');
+  if(pt) pt.textContent=cur||'No line selected yet';
+  // Update count badge
+  const badge=document.getElementById('inspire-count-badge');
+  if(badge) badge.textContent=lines.length?lines.length+'':'';
+  if(badge) badge.style.display=lines.length?'inline':'none';
 }
 
 // Full-screen inspire modal
@@ -1995,23 +2033,54 @@ function openInspireAll(){
   if(!modal){
     modal=document.createElement('div');
     modal.id='inspire-all-modal';
-    modal.style.cssText='position:fixed;inset:0;background:var(--paper);z-index:3000;display:flex;flex-direction:column;';
+    modal.style.cssText='position:fixed;inset:0;background:var(--paper);z-index:3000;display:flex;flex-direction:column;overflow:hidden;';
     document.body.appendChild(modal);
   }
   modal.innerHTML=`
-    <div style="display:flex;align-items:center;gap:12px;padding:18px 20px;border-bottom:1px solid var(--rule);position:sticky;top:0;background:var(--paper)">
-      <button onclick="document.getElementById('inspire-all-modal').style.display='none';renderInspireLines();" style="width:36px;height:36px;border-radius:50%;border:1px solid var(--rule);background:none;cursor:pointer;font-size:20px;color:var(--ink3)">‹</button>
-      <div style="flex:1"><div style="font-size:16px;font-weight:600">All Inspiration Lines</div><div style="font-size:12px;color:var(--ink3);margin-top:1px">${lines.length} line${lines.length!==1?'s':''} · tap to select</div></div>
+    <div style="display:flex;align-items:center;gap:12px;padding:16px 20px;border-bottom:1px solid var(--rule);background:var(--paper);flex-shrink:0">
+      <button onclick="document.getElementById('inspire-all-modal').style.display='none';renderInspireLines();renderHome();" style="width:36px;height:36px;border-radius:50%;border:1px solid var(--rule);background:none;cursor:pointer;font-size:20px;color:var(--ink3);display:flex;align-items:center;justify-content:center">‹</button>
+      <div style="flex:1">
+        <div style="font-size:16px;font-weight:600">✨ Inspiration Lines</div>
+        <div style="font-size:12px;color:var(--ink3);margin-top:1px">${lines.length} line${lines.length!==1?'s':''} · tap any to set as today's</div>
+      </div>
     </div>
-    <div style="flex:1;overflow-y:auto;padding:14px 20px;display:flex;flex-direction:column;gap:8px">
-      ${lines.map((line,i)=>`
+    <!-- Add new line -->
+    <div style="padding:12px 20px;border-bottom:1px solid var(--rule);background:var(--surface);flex-shrink:0;display:flex;gap:8px">
+      <input id="inspire-modal-input" type="text" placeholder="Add a new line..." maxlength="120"
+        style="flex:1;padding:10px 14px;border:1.5px solid var(--rule);border-radius:var(--r-lg);background:var(--paper);color:var(--ink);font-family:inherit;font-size:13px;outline:none"
+        onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--rule)'"
+        onkeydown="if(event.key==='Enter')addInspireLineFromModal()">
+      <button onclick="addInspireLineFromModal()" style="padding:10px 16px;background:var(--ink);color:#fff;border:none;border-radius:var(--r-lg);font-family:inherit;font-size:13px;font-weight:600;cursor:pointer">＋</button>
+    </div>
+    <!-- Lines list -->
+    <div id="inspire-modal-list" style="flex:1;overflow-y:auto;padding:12px 20px;display:flex;flex-direction:column;gap:8px">
+      ${lines.length?lines.map((line,i)=>`
         <div class="inspire-card ${line===cur?'selected':''}" onclick="selectInspireLineAll(${i})">
           <div class="ic-radio"></div>
           <div class="ic-text">${line}</div>
           <button class="ic-del" onclick="event.stopPropagation();deleteInspireLineAll(${i})" title="Remove">×</button>
-        </div>`).join('')}
-    </div>`;
+        </div>`).join('')
+      :'<div style="text-align:center;padding:40px 20px;color:var(--ink3)"><div style="font-size:40px;margin-bottom:12px">✨</div><div style="font-size:14px">No lines yet</div><div style="font-size:12px;margin-top:4px">Add your first inspiration above</div></div>'}
+    </div>
+    <!-- Bottom actions -->
+    ${lines.length?`<div style="padding:12px 20px;border-top:1px solid var(--rule);background:var(--surface);flex-shrink:0;display:flex;gap:8px">
+      <button onclick="pickRandomInspire();document.getElementById('inspire-all-modal').style.display='none';renderInspireLines();renderHome();" style="flex:1;padding:12px;border:1.5px solid var(--gold);border-radius:var(--r-lg);background:var(--gold-pale);color:var(--gold-d);font-family:inherit;font-size:13px;font-weight:600;cursor:pointer">🔀 Random</button>
+      <button onclick="clearAllInspireLines();document.getElementById('inspire-all-modal').style.display='none';" style="padding:12px 16px;border:1.5px solid var(--rule);border-radius:var(--r-lg);background:none;color:var(--ink3);font-family:inherit;font-size:13px;cursor:pointer">Clear all</button>
+    </div>`:''}`;
   modal.style.display='flex';
+}
+function addInspireLineFromModal(){
+  const inp=document.getElementById('inspire-modal-input');
+  const val=inp?.value.trim();
+  if(!val){toast('Type a line first');return;}
+  const lines=JSON.parse(localStorage.getItem('paisa_inspire_lines')||'[]');
+  if(lines.includes(val)){toast('Already added');return;}
+  lines.push(val);
+  localStorage.setItem('paisa_inspire_lines',JSON.stringify(lines));
+  if(!localStorage.getItem('paisa_inspire_msg')){localStorage.setItem('paisa_inspire_msg',val);}
+  openInspireAll(); // refresh modal
+  renderInspireLines();
+  renderHome();
 }
 function selectInspireLineAll(i){
   const lines=JSON.parse(localStorage.getItem('paisa_inspire_lines')||'[]');
@@ -2068,11 +2137,13 @@ function deleteInspireLine(i){
   renderHome();
 }
 function clearAllInspireLines(){
-  if(!confirm('Clear all inspiration lines?')) return;
-  localStorage.removeItem('paisa_inspire_lines');
-  localStorage.removeItem('paisa_inspire_msg');
-  renderInspireLines();
-  renderHome();
+  showConfirm('✨','Clear all lines?','All your inspiration lines will be removed.',()=>{
+    localStorage.removeItem('paisa_inspire_lines');
+    localStorage.removeItem('paisa_inspire_msg');
+    renderInspireLines();
+    renderHome();
+    toast('All lines cleared');
+  });
 }
 
 // Search mode toggle
@@ -2088,20 +2159,23 @@ function switchSearchMode(mode){
   else document.getElementById('ai-search-inp')?.focus();
 }
 function quickFilter(type){
-  const inp=document.getElementById('search-inp');
-  if(!inp) return;
-  const map={today:td(),week:'',food:'food',shopping:'shopping',upi:'upi',credit:'credit card'};
-  if(type==='week'){
-    // set month filter to current month instead
-    const sel=document.getElementById('mfilter');
-    if(sel){sel.value='';renderAll();}
-    return;
-  }
-  inp.value=map[type]||type;
-  renderAll();
   // Highlight active chip
   document.querySelectorAll('.filter-chip').forEach(b=>b.classList.remove('on'));
-  event.target.classList.add('on');
+  if(event&&event.target) event.target.classList.add('on');
+
+  if(type==='week'){
+    // Use a special week filter flag
+    window._weekFilter=true;
+    document.getElementById('search-inp').value='';
+    renderAll();
+    return;
+  }
+  window._weekFilter=false;
+  const inp=document.getElementById('search-inp');
+  if(!inp) return;
+  const map={today:td(),food:'food',shopping:'shopping',upi:'upi',credit:'credit card'};
+  inp.value=map[type]||type;
+  renderAll();
 }
 
 // ===== PIN PROTECTION =====
