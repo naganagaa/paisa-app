@@ -505,8 +505,8 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:#fafaf8;color:#0f0f0f
           </div>
           <!-- Single action button -->
           <button onclick="openInspireAll()" style="width:100%;padding:14px;background:var(--ink);color:#fff;border:none;border-radius:var(--r-lg);font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">
-            <span>✨</span>
-            <span>View Inspiration</span>
+            <span>⚙️</span>
+            <span>Manage Inspiration</span>
             <span id="inspire-count-badge" style="background:rgba(255,255,255,.2);color:#fff;border-radius:99px;padding:2px 8px;font-size:11px;font-weight:600"></span>
           </button>
           <div id="inspire-lines-list" style="display:none"></div>
@@ -547,7 +547,16 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:#fafaf8;color:#0f0f0f
           <input type="time" id="eod-time-input" value="21:00" style="flex:1;padding:10px 12px;border:1px solid var(--rule);border-radius:var(--r);background:var(--paper);color:var(--ink);font-family:inherit;font-size:14px">
           <button class="save-btn" onclick="saveEODTime()" style="margin:0;width:auto;padding:10px 16px;font-size:13px">Set Time</button>
         </div>
-        <button class="save-btn" onclick="requestEODPermission()" style="margin:0;background:var(--surface);color:var(--ink);border:1px solid var(--rule);font-size:13px;padding:11px">🔔 Enable Notifications</button>
+        <div class="toggle-row">
+          <div>
+            <div class="toggle-label" id="notif-toggle-label">🔔 Daily Notifications</div>
+            <div class="toggle-sub" id="notif-toggle-sub">Enable to get notified at set time</div>
+          </div>
+          <label class="tog">
+            <input type="checkbox" id="notif-toggle" onchange="toggleEODNotification(this.checked)">
+            <span class="tog-slider"></span>
+          </label>
+        </div>
       </div>
 
       <!-- 7. SMART IMPORT -->
@@ -1321,9 +1330,11 @@ function renderMore(){
     <div class="stat-box"><div class="stat-label">This month</div><div class="stat-val">${mT.length} txns</div></div>
     <div class="stat-box"><div class="stat-label">Total spent</div><div class="stat-val" style="color:var(--red)">${fmt(totE)}</div></div>
     <div class="stat-box"><div class="stat-label">Total income</div><div class="stat-val" style="color:var(--green)">${fmt(totI)}</div></div>`;
-  // Init EOD time
+  // Init EOD time and notification toggle
   const eodInp=document.getElementById('eod-time-input');
   if(eodInp)eodInp.value=localStorage.getItem('paisa_eod_time')||'21:00';
+  const notifEnabled=localStorage.getItem('paisa_notif_enabled')==='1'&&Notification.permission==='granted';
+  updateNotifToggleUI(notifEnabled);
   // Init API key field
   const apiKeyField=document.getElementById('si-api-key-input');
   if(apiKeyField)apiKeyField.value=localStorage.getItem('paisa_api_key')||'';
@@ -1711,12 +1722,44 @@ function showEODSummary(){
     new Notification('Paisa — Daily Summary 🦁',{body:'Today you spent ₹'+Math.round(total).toLocaleString('en-IN'),icon:'/paisa-app/icon-192.png'});
   }
 }
+function toggleEODNotification(enabled){
+  if(!('Notification' in window)){
+    toast('Notifications not supported on this device');
+    document.getElementById('notif-toggle').checked=false;
+    return;
+  }
+  if(enabled){
+    Notification.requestPermission().then(p=>{
+      if(p==='granted'){
+        localStorage.setItem('paisa_notif_enabled','1');
+        initEODNotification();
+        updateNotifToggleUI(true);
+        toast('Notifications enabled ✓');
+      } else {
+        document.getElementById('notif-toggle').checked=false;
+        localStorage.setItem('paisa_notif_enabled','0');
+        updateNotifToggleUI(false);
+        toast('Permission denied — enable in browser settings');
+      }
+    });
+  } else {
+    localStorage.setItem('paisa_notif_enabled','0');
+    if(window._eodTimer) clearTimeout(window._eodTimer);
+    updateNotifToggleUI(false);
+    toast('Notifications disabled');
+  }
+}
+function updateNotifToggleUI(enabled){
+  const lbl=document.getElementById('notif-toggle-label');
+  const sub=document.getElementById('notif-toggle-sub');
+  const tog=document.getElementById('notif-toggle');
+  if(lbl) lbl.textContent='🔔 Daily Notifications — '+(enabled?'Enabled':'Disabled');
+  if(sub) sub.textContent=enabled?'You will be notified at '+( localStorage.getItem('paisa_eod_time')||'21:00'):'Tap to enable daily summary notification';
+  if(tog) tog.checked=!!enabled;
+}
 function requestEODPermission(){
-  if(!('Notification' in window)){toast('Notifications not supported');return;}
-  Notification.requestPermission().then(p=>{
-    toast(p==='granted'?'Notifications enabled ✓':'Permission denied');
-    if(p==='granted') initEODNotification();
-  });
+  // Legacy - redirect to toggle
+  toggleEODNotification(true);
 }
 function saveEODTime(){
   const t=document.getElementById('eod-time-input')?.value||'21:00';
@@ -1870,15 +1913,21 @@ function parseTransactionText(txt){
   if(!txt||!txt.trim()) return null;
   const tl=txt.toLowerCase();
 
-  // 1. AMOUNT
+  // 1. AMOUNT - prefer ₹/INR/Rs patterns, avoid time values (10:16)
   let amt=null;
   const amtRx=[
     /(?:rs\.?|inr|\u20b9)\s*([\d,]+(?:\.\d{1,2})?)/i,
     /([\d,]+(?:\.\d{1,2})?)\s*(?:rs\.?|inr|\u20b9)/i,
     /(?:amount|amt|debited|credited|paid|spent|sent|received)\s*[:\-]?\s*(?:rs\.?|inr|\u20b9)?\s*([\d,]+(?:\.\d{1,2})?)/i,
-    /\b([\d,]{2,}(?:\.\d{1,2})?)\b/,
   ];
   for(const p of amtRx){const m=txt.match(p);if(m){const v=parseFloat(m[1].replace(/,/g,""));if(v>0){amt=v;break;}}}
+  // Fallback: largest standalone number that isn't a time/year/phone
+  if(!amt){
+    const nums=[...txt.matchAll(/\b(\d{1,3}(?:,\d{3})*(?:\.\d{1,2})?)\b/g)]
+      .map(m=>parseFloat(m[1].replace(/,/g,"")))
+      .filter(n=>n>0&&n<10000000&&!(n>1900&&n<2100));
+    if(nums.length) amt=Math.max(...nums);
+  }
   if(!amt) return null;
 
   // 2. TYPE
@@ -1893,43 +1942,70 @@ function parseTransactionText(txt){
   else if(/\bneft\b|\bimps\b|\brtgs\b/i.test(txt)) mode="NEFT";
   else if(/\bcash\b/i.test(txt)) mode="Cash";
 
-  // 4. DESCRIPTION - extract merchant name
+  // 4. DESCRIPTION - priority order: Message/Note > Paid to > merchant name > ALL CAPS block
   let desc="";
-  const mRx=[
-    /paid\s+to\s+([A-Za-z][A-Za-z0-9 &.-]{2,35}?)(?:\s*(?:upi|@|\d{10}|ref|txn|on\s+\d)|[,\n]|$)/i,
-    /(?:at|to|from)\s+([A-Za-z][A-Za-z0-9 &.-]{2,30}?)(?:\s+(?:on|upi|ref|\d)|[,\n]|$)/i,
-    /(?:message|note|remarks?)[:\s]+([A-Za-z0-9 &.-]{2,40})(?:[,.\n]|$)/i,
-    /^([A-Z][A-Z0-9 &.-]{3,30})(?:\s*@|\s+\d{10})/m,
-  ];
-  for(const p of mRx){const m=txt.match(p);if(m&&m[1].trim().length>1){desc=m[1].trim().replace(/\s+/g," ");break;}}
-  if(!desc){const caps=txt.match(/\b([A-Z][A-Z &]{3,30}[A-Z])\b/);if(caps)desc=caps[1].trim();}
-  if(!desc) desc="Transaction";
+  // Priority 1: Message / Note field (most user-friendly label)
+  const msgM=txt.match(/(?:message|note|remarks?)[:\s]+([^\n]{2,60}?)(?:\n|$)/i);
+  if(msgM&&msgM[1].trim()&&!/^\s*$/.test(msgM[1])) desc=msgM[1].trim();
 
-  // 5. DATE
+  // Priority 2: Merchant after "Paid to" — stop before UPI handle or digits
+  if(!desc){
+    const ptM=txt.match(/paid\s+to[:\s]+([A-Za-z][A-Za-z0-9 &.'-]{1,40}?)(?=\s*(?:upi|@|\d{10}|ref|txn|vpa|\n|$))/i);
+    if(ptM&&ptM[1].trim().length>1) desc=ptM[1].trim();
+  }
+  // Priority 3: Name before @ (UPI handle like "Nandini Milk@ybl")
+  if(!desc){
+    const upiM=txt.match(/([A-Za-z][A-Za-z0-9 &.'-]{2,35})@[a-z]+/i);
+    if(upiM) desc=upiM[1].trim();
+  }
+  // Priority 4: at/to/from merchant
+  if(!desc){
+    const atM=txt.match(/(?:^|\s)(?:at|to|from)\s+([A-Za-z][A-Za-z0-9 &.'-]{2,30}?)(?=\s+(?:on|upi|ref|\d)|[,\n]|$)/i);
+    if(atM&&atM[1].trim().length>1) desc=atM[1].trim();
+  }
+  // Priority 5: ALL CAPS merchant name (bank SMS style)
+  if(!desc){
+    const caps=txt.match(/\b([A-Z][A-Z0-9 &]{3,}[A-Z])\b/);
+    if(caps&&!['INR','UPI','NEFT','IMPS','RTGS','SMS','OTP','ATM','HDFC','ICICI','AXIS','SBI','KOTAK'].includes(caps[1]))
+      desc=caps[1].trim();
+  }
+  if(!desc) desc="Transaction";
+  // Clean up desc - remove trailing UPI/ref artifacts
+  desc=desc.replace(/\s*(upi|ref|txn|vpa|@.*)$/i,"").trim()||"Transaction";
+
+  // 5. DATE - parse carefully, avoid matching time (10:16) as date
   let date=td();
   const mnth={jan:"01",feb:"02",mar:"03",apr:"04",may:"05",jun:"06",jul:"07",aug:"08",sep:"09",oct:"10",nov:"11",dec:"12"};
   let dm;
-  if((dm=txt.match(/(\d{1,2})[\s-]([A-Za-z]{3})[\s-](\d{4})/))&&mnth[dm[2].toLowerCase()])
-    date=`${dm[3]}-${mnth[dm[2].toLowerCase()]}-${dm[1].padStart(2,"0")}`;
-  else if((dm=txt.match(/(\d{4})-(\d{2})-(\d{2})/))) date=dm[0];
-  else if((dm=txt.match(/(\d{2})[/\-](\d{2})[/\-](\d{4})/))) date=`${dm[3]}-${dm[2]}-${dm[1]}`;
-  else if((dm=txt.match(/(\d{2})[/\-](\d{2})[/\-](\d{2})/))) date=`20${dm[3]}-${dm[2]}-${dm[1]}`;
+  // "30 Jun 2026" or "30-Jun-2026" or "2 Jul 2026"
+  const dmy1=txt.match(/\b(\d{1,2})[\s\-](Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[\s\-](\d{4})\b/i);
+  if(dmy1&&mnth[dmy1[2].toLowerCase()]){
+    date=`${dmy1[3]}-${mnth[dmy1[2].toLowerCase()]}-${dmy1[1].padStart(2,"0")}`;
+  }
+  // ISO "2026-07-02"
+  else if((dm=txt.match(/\b(\d{4})-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])\b/))){
+    date=dm[0];
+  }
+  // "02/07/2026" DD/MM/YYYY — only match if 4-digit year (avoid time 10:16)
+  else if((dm=txt.match(/\b(0[1-9]|[12]\d|3[01])[\/\-](0[1-9]|1[0-2])[\/\-](\d{4})\b/))){
+    date=`${dm[3]}-${dm[2]}-${dm[1]}`;
+  }
 
   // 6. CATEGORY
   const cmap=[
-    ["Food",["swiggy","zomato","restaurant","cafe","food","pizza","burger","dhaba","chai","bakery","bake","nandini","milk","dairy"]],
-    ["Transport",["uber","ola","rapido","metro","bus","auto","cab","fuel","petrol","diesel","parking","irctc","indigo","spicejet"]],
-    ["Shopping",["amazon","flipkart","myntra","mall","shop","store","cloth","fashion","nykaa","max","meesho","ajio","stationery","world"]],
-    ["Health",["hospital","clinic","pharmacy","medic","doctor","apollo","medicine","lab","diagnostic"]],
-    ["Bills",["electricity","bescom","mseb","bill","recharge","mobile","dth","broadband","water","gas","jio","airtel","bsnl","vodafone"]],
-    ["Rent",["rent","landlord","pg","hostel","maintenance"]],
-    ["Grocery",["blinkit","bigbasket","grocery","ration","vegetables","dmart","supermarket","nature"]],
-    ["Entertainment",["netflix","prime","hotstar","spotify","movie","cinema","pvr","inox","disney"]],
-    ["Education",["udemy","coursera","school","college","tuition","book","study"]],
-    ["Salary",["salary","stipend","wages","payroll"]],
+    ["Food",["swiggy","zomato","restaurant","cafe","food","pizza","burger","dhaba","chai","bakery","bake","nandini","milk","dairy","biryani","kfc","mcdonald"]],
+    ["Transport",["uber","ola","rapido","metro","bus","auto","cab","fuel","petrol","diesel","parking","irctc","indigo","spicejet","flight","train","toll"]],
+    ["Shopping",["amazon","flipkart","myntra","mall","shop","store","cloth","fashion","nykaa","max","meesho","ajio","stationery","courier","delivery"]],
+    ["Health",["hospital","clinic","pharmacy","medic","doctor","apollo","medicine","lab","diagnostic","health","dental","eye","vision"]],
+    ["Bills",["electricity","bescom","mseb","bill","recharge","mobile","dth","broadband","water","gas","jio","airtel","bsnl","vodafone","vi ","idea","postpaid"]],
+    ["Rent",["rent","landlord","pg","hostel","maintenance","society"]],
+    ["Grocery",["blinkit","bigbasket","grocery","ration","vegetables","dmart","supermarket","nature","fresh","fruits"]],
+    ["Entertainment",["netflix","prime","hotstar","spotify","movie","cinema","pvr","inox","disney","youtube","gaming"]],
+    ["Education",["udemy","coursera","school","college","tuition","book","study","course","class"]],
+    ["Salary",["salary","stipend","wages","payroll","ctc"]],
     ["FD",["fixed deposit"]],
-    ["Stocks",["zerodha","groww","equity","angel","upstox"]],
-    ["SIP",["sip","mutual fund"]],
+    ["Stocks",["zerodha","groww","equity","angel","upstox","shares","nse","bse"]],
+    ["SIP",["sip","mutual fund","mf ","elss"]],
   ];
   let cat=type==="inc"?"Salary":type==="sav"?"FD":"Other";
   const src=(tl+" "+(desc||"").toLowerCase());
@@ -2055,10 +2131,11 @@ function openInspireAll(){
     <!-- Lines list -->
     <div id="inspire-modal-list" style="flex:1;overflow-y:auto;padding:12px 20px;display:flex;flex-direction:column;gap:8px">
       ${lines.length?lines.map((line,i)=>`
-        <div class="inspire-card ${line===cur?'selected':''}" onclick="selectInspireLineAll(${i})">
+        <div class="inspire-card ${line===cur?'selected':''}" id="icard-${i}" onclick="selectInspireLineAll(${i})">
           <div class="ic-radio"></div>
-          <div class="ic-text">${line}</div>
-          <button class="ic-del" onclick="event.stopPropagation();deleteInspireLineAll(${i})" title="Remove">×</button>
+          <div class="ic-text" id="itext-${i}">${line}</div>
+          <button class="ic-del" onclick="event.stopPropagation();editInspireLine(${i})" title="Edit" style="color:var(--gold-d);font-size:13px">✏️</button>
+          <button class="ic-del" onclick="event.stopPropagation();confirmDeleteInspire(${i})" title="Remove">×</button>
         </div>`).join('')
       :'<div style="text-align:center;padding:40px 20px;color:var(--ink3)"><div style="font-size:40px;margin-bottom:12px">✨</div><div style="font-size:14px">No lines yet</div><div style="font-size:12px;margin-top:4px">Add your first inspiration above</div></div>'}
     </div>
@@ -2092,15 +2169,64 @@ function selectInspireLineAll(i){
   renderHome();
   toast('Inspiration updated ✓');
 }
+function confirmDeleteInspire(i){
+  const lines=JSON.parse(localStorage.getItem('paisa_inspire_lines')||'[]');
+  const line=lines[i]||'this line';
+  // Close inspire modal temporarily, show confirm, then reopen if cancelled
+  document.getElementById('inspire-all-modal').style.display='none';
+  showConfirm('✨','Delete this line?','"'+line.slice(0,50)+(line.length>50?'…':'')+'"',()=>{
+    deleteInspireLineAll(i);
+  });
+  // If user cancels confirm modal, reopen inspire modal
+  const oldCancel=document.getElementById('confirmCancel').onclick;
+  document.getElementById('confirmCancel').onclick=()=>{
+    closeConfirm();
+    openInspireAll();
+  };
+}
 function deleteInspireLineAll(i){
   const lines=JSON.parse(localStorage.getItem('paisa_inspire_lines')||'[]');
   const cur=localStorage.getItem('paisa_inspire_msg')||'';
   if(lines[i]===cur) localStorage.removeItem('paisa_inspire_msg');
   lines.splice(i,1);
   localStorage.setItem('paisa_inspire_lines',JSON.stringify(lines));
-  openInspireAll(); // refresh modal
+  openInspireAll();
   renderInspireLines();
   renderHome();
+}
+function editInspireLine(i){
+  const lines=JSON.parse(localStorage.getItem('paisa_inspire_lines')||'[]');
+  if(!lines[i]) return;
+  const card=document.getElementById('icard-'+i);
+  const textEl=document.getElementById('itext-'+i);
+  if(!card||!textEl) return;
+  // Replace text with inline input
+  textEl.innerHTML=`<input id="iedit-${i}" type="text" value="${lines[i].replace(/"/g,'&quot;')}" maxlength="120"
+    style="width:100%;border:1.5px solid var(--gold);border-radius:8px;padding:6px 8px;font-family:inherit;font-size:13px;background:var(--paper);color:var(--ink);outline:none"
+    onclick="event.stopPropagation()"
+    onkeydown="if(event.key==='Enter'){event.stopPropagation();saveInspireEdit(${i});}if(event.key==='Escape')openInspireAll();">`;
+  setTimeout(()=>{
+    const inp=document.getElementById('iedit-'+i);
+    if(inp){inp.focus();inp.select();}
+  },50);
+  // Replace edit button with save button
+  const editBtn=card.querySelector('[title="Edit"]');
+  if(editBtn){editBtn.textContent='✓';editBtn.style.color='var(--green)';editBtn.onclick=(ev)=>{ev.stopPropagation();saveInspireEdit(i);};}
+}
+function saveInspireEdit(i){
+  const inp=document.getElementById('iedit-'+i);
+  if(!inp) return;
+  const val=inp.value.trim();
+  if(!val){toast('Line cannot be empty');return;}
+  const lines=JSON.parse(localStorage.getItem('paisa_inspire_lines')||'[]');
+  const cur=localStorage.getItem('paisa_inspire_msg')||'';
+  if(lines[i]===cur) localStorage.setItem('paisa_inspire_msg',val);
+  lines[i]=val;
+  localStorage.setItem('paisa_inspire_lines',JSON.stringify(lines));
+  openInspireAll();
+  renderInspireLines();
+  renderHome();
+  toast('Line updated ✓');
 }
 function addInspireLine(){
   const inp=document.getElementById('inspire-new-input');
