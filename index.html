@@ -270,9 +270,31 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:#fafaf8;color:#0f0f0f
 .pin-key.empty{background:transparent;box-shadow:none;cursor:default;}
 .pin-error{color:#c0392b;font-size:13px;font-weight:500;min-height:20px;margin-bottom:8px;text-align:center;}
 .pin-link{font-size:13px;color:var(--ink3);margin-top:20px;cursor:pointer;text-decoration:underline;}
+
+/* Dark mode */
+body.dark-mode{
+  --paper:#0f0f0f;
+  --surface:#1a1a1a;
+  --ink:#f0ede8;
+  --ink2:#c8c4bc;
+  --ink3:#7a7570;
+  --rule:#2a2a2a;
+  --rule2:#222222;
+  --gold-pale:#1a1600;
+  --green-p:#0a1f0a;
+  --red-p:#1f0a0a;
+}
+body.dark-mode .hero-card{background:linear-gradient(135deg,#0a0a1a 0%,#0d1520 50%,#071830 100%);}
+body.dark-mode .pin-screen{background:var(--paper);}
+body.dark-mode .modal-card{background:#1a1a1a;border:1px solid #2a2a2a;}
+body.dark-mode .tog-slider{background:#333;}
+body.dark-mode #nav{background:#111;border-top-color:#222;}
+body.dark-mode .sheet{background:#111;}
+body.dark-mode .cat-modal-wrap{background:#111;}
 </style>
 <style>.cat-modal{display:none;position:fixed;inset:0;background:#0007;z-index:999;align-items:flex-end}.cat-modal.show{display:flex}.cat-card{background:#fff;width:100%;padding:24px;border-radius:24px 24px 0 0}.cat-input{width:100%;box-sizing:border-box;padding:13px;border:1px solid #ddd;border-radius:12px}.emoji-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:8px}.emoji,.mini{padding:9px;border:1px solid #ddd;border-radius:10px;background:#fff}.sel{border:2px solid #17221d}.cat-actions{display:flex;gap:10px;margin-top:20px}.cat-btn{flex:1;padding:12px;border:0;border-radius:12px;background:#17221d;color:#fff;font-weight:700}.alt{background:#f3f1eb;color:#17221d}.cat-row{display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid #eee}.del{color:#b42318}.delmain{background:#b42318;color:#fff}.delmain{background:#b42318;color:#fff}.home-mascot-top{position:absolute;right:18px;top:16px;font-size:38px;z-index:5;animation:lion 2.5s infinite}@keyframes lion{50%{transform:translateY(-5px)}}</style></head>
 <body>
+<script>try{if(localStorage.getItem("paisa_dark_mode")==="1")document.body.classList.add("dark-mode");}catch(e){}</script>
 
 <!-- PIN SETUP SCREEN -->
 <div id="pin-setup" class="pin-screen" style="display:none">
@@ -473,6 +495,19 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:#fafaf8;color:#0f0f0f
         </button>
       </div>
 
+      <!-- 1b. DARK MODE TOGGLE -->
+      <div style="padding:10px 20px 0">
+        <div class="toggle-row">
+          <div>
+            <div class="toggle-label" id="dark-mode-label">🌙 Dark Mode</div>
+            <div class="toggle-sub" id="dark-mode-sub">Switch to dark theme</div>
+          </div>
+          <label class="tog">
+            <input type="checkbox" id="dark-mode-toggle" onchange="toggleDarkMode(this.checked)">
+            <span class="tog-slider"></span>
+          </label>
+        </div>
+      </div>
       <!-- 2. SUMMARY STATS -->
       <div class="sec-head" style="padding-top:20px"><h2>Summary</h2></div>
       <div class="exp-grid" id="sum-grid"></div>
@@ -519,7 +554,7 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:#fafaf8;color:#0f0f0f
       <div class="sec-head"><h2>Credit Cards</h2></div>
       <div class="toggle-row">
         <div>
-          <div class="toggle-label">💳 Enable Credit Card 1</div>
+          <div class="toggle-label" id="cc-toggle-lbl1">💳 Enable Credit Card 1</div>
           <div class="toggle-sub">Track card 1 expenses, limit & payments</div>
         </div>
         <label class="tog">
@@ -530,7 +565,7 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:#fafaf8;color:#0f0f0f
       <div style="height:8px"></div>
       <div class="toggle-row">
         <div>
-          <div class="toggle-label">💳 Enable Credit Card 2</div>
+          <div class="toggle-label" id="cc-toggle-lbl2">💳 Enable Credit Card 2</div>
           <div class="toggle-sub">Track card 2 expenses, limit & payments</div>
         </div>
         <label class="tog">
@@ -584,7 +619,12 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:#fafaf8;color:#0f0f0f
       <div class="exp-card">
         <div class="exp-row" onclick="xCSV()">
           <div class="exp-ico" style="background:#edf7f3">📊</div>
-          <div class="exp-info"><div class="exp-name">CSV</div><div class="exp-desc">Open in Excel or Google Sheets</div></div>
+          <div class="exp-info"><div class="exp-name">CSV</div><div class="exp-desc">Comma-separated, works everywhere</div></div>
+          <span class="arr">›</span>
+        </div>
+        <div class="exp-row" onclick="xExcel()">
+          <div class="exp-ico" style="background:#e8f5e9">📗</div>
+          <div class="exp-info"><div class="exp-name">Excel (.xlsx)</div><div class="exp-desc">Opens directly in Microsoft Excel</div></div>
           <span class="arr">›</span>
         </div>
         <div class="exp-row" onclick="xJSON()">
@@ -877,8 +917,43 @@ function addCustomCategory(){
 }
 function saveNewCategory(){let n=document.getElementById('catName').value.trim(),e=(document.querySelector('#emoji-picker-grid .emoji.sel')||document.querySelector('.emoji.sel'))?.dataset.e||'📌';if(!n)return toast('Enter a category name');if(CATS.some(c=>c.n.toLowerCase()==n.toLowerCase()))return toast('Category already exists');CATS.push({n:n,e:e,c:'#6b7280',bg:'#f3f4f6'});saveCustomCategories();if(cType==='inc'){INC_CATS.push(n);saveIncCats();}else if(cType==='sav'){SAV_CATS.push(n);saveSavCats();}selCat=n;renderChips();closeCatModal();toast('Category added ✓')}
 function manageCustomCategories(){let a=CATS.filter(c=>!DEFAULT_CAT_NAMES.includes(c.n));if(!a.length)return toast('No custom categories yet');catModal('Manage categories','<div class="cat-list">'+a.map(c=>'<div class="cat-row"><span>'+c.e+' '+c.n+'</span><span><button class="mini" onclick="renameCategory(\''+c.n+'\')">Rename</button><button class="mini del" onclick="deleteCategory(\''+c.n+'\')">Delete</button></span></div>').join('')+'</div>','<button class="cat-btn alt" onclick="closeCatModal()">Done</button>')}
-function renameCategory(o){catModal('Rename category','<label>New category name</label><input id="renameName" class="cat-input" value="'+o+'">','<button class="cat-btn alt" onclick="manageCustomCategories()">Cancel</button><button class="cat-btn" onclick="saveCatRename(\''+o+'\')">Save</button>')}
-function saveCatRename(o){let n=document.getElementById('renameName').value.trim();if(!n)return toast('Enter a category name');let ct=CATS.find(x=>x.n===o);if(!ct)return toast('Category not found');ct.n=n;txns.forEach(t=>{if(t.cat===o)t.cat=n});persist();saveCustomCategories();selCat=n;renderChips();closeCatModal();toast('Category renamed ✓')}
+function renameCategory(o){
+  const cat=CATS.find(x=>x.n===o);
+  const curE=cat?cat.e:'📌';
+  catModal('Rename category',
+    '<label>Category name</label><input id="renameName" class="cat-input" value="'+o+'">' +
+    '<label style="margin-top:10px;display:block">Change emoji (optional)</label>' +
+    '<div id="rename-emoji-grid" class="emoji-grid" style="grid-template-columns:repeat(8,1fr);max-height:160px;overflow-y:auto"><button class="emoji" data-e="📌">📌</button><button class="emoji" data-e="🍔">🍔</button><button class="emoji" data-e="☕">☕</button><button class="emoji" data-e="🍕">🍕</button><button class="emoji" data-e="🍣">🍣</button><button class="emoji" data-e="🥗">🥗</button><button class="emoji" data-e="🧁">🧁</button><button class="emoji" data-e="🍺">🍺</button><button class="emoji" data-e="🥘">🥘</button><button class="emoji" data-e="🍜">🍜</button><button class="emoji" data-e="🥐">🥐</button><button class="emoji" data-e="🍱">🍱</button><button class="emoji" data-e="🚕">🚕</button><button class="emoji" data-e="🚌">🚌</button><button class="emoji" data-e="✈">✈</button><button class="emoji" data-e="️">️</button><button class="emoji" data-e="🚂">🚂</button><button class="emoji" data-e="⛽">⛽</button><button class="emoji" data-e="🛵">🛵</button><button class="emoji" data-e="🚲">🚲</button><button class="emoji" data-e="🚢">🚢</button><button class="emoji" data-e="🚁">🚁</button><button class="emoji" data-e="🏍">🏍</button><button class="emoji" data-e="️">️</button><button class="emoji" data-e="🛍">🛍</button><button class="emoji" data-e="️">️</button><button class="emoji" data-e="👗">👗</button><button class="emoji" data-e="👟">👟</button><button class="emoji" data-e="💄">💄</button><button class="emoji" data-e="💍">💍</button><button class="emoji" data-e="🕶">🕶</button><button class="emoji" data-e="️">️</button><button class="emoji" data-e="👜">👜</button><button class="emoji" data-e="🧴">🧴</button><button class="emoji" data-e="🪥">🪥</button><button class="emoji" data-e="🎮">🎮</button><button class="emoji" data-e="🎬">🎬</button><button class="emoji" data-e="🎧">🎧</button><button class="emoji" data-e="🎨">🎨</button><button class="emoji" data-e="📚">📚</button><button class="emoji" data-e="🎲">🎲</button><button class="emoji" data-e="🏋">🏋</button><button class="emoji" data-e="️">️</button><button class="emoji" data-e="⚽">⚽</button><button class="emoji" data-e="🎸">🎸</button><button class="emoji" data-e="🎯">🎯</button><button class="emoji" data-e="🎠">🎠</button><button class="emoji" data-e="🏠">🏠</button><button class="emoji" data-e="🛋">🛋</button><button class="emoji" data-e="️">️</button><button class="emoji" data-e="🔧">🔧</button><button class="emoji" data-e="💡">💡</button><button class="emoji" data-e="🛁">🛁</button><button class="emoji" data-e="🪴">🪴</button><button class="emoji" data-e="🧹">🧹</button><button class="emoji" data-e="🔑">🔑</button><button class="emoji" data-e="🪑">🪑</button><button class="emoji" data-e="💊">💊</button><button class="emoji" data-e="🏥">🏥</button><button class="emoji" data-e="🧘">🧘</button><button class="emoji" data-e="🩺">🩺</button><button class="emoji" data-e="💉">💉</button><button class="emoji" data-e="🦷">🦷</button><button class="emoji" data-e="🩹">🩹</button><button class="emoji" data-e="📱">📱</button><button class="emoji" data-e="💻">💻</button><button class="emoji" data-e="⌚">⌚</button><button class="emoji" data-e="📷">📷</button><button class="emoji" data-e="🖥">🖥</button><button class="emoji" data-e="️">️</button><button class="emoji" data-e="🎙">🎙</button><button class="emoji" data-e="️">️</button><button class="emoji" data-e="🔋">🔋</button><button class="emoji" data-e="💰">💰</button><button class="emoji" data-e="📈">📈</button><button class="emoji" data-e="🏦">🏦</button><button class="emoji" data-e="💳">💳</button><button class="emoji" data-e="🎁">🎁</button><button class="emoji" data-e="🌱">🌱</button><button class="emoji" data-e="🐾">🐾</button><button class="emoji" data-e="📦">📦</button><button class="emoji" data-e="✏">✏</button><button class="emoji" data-e="️">️</button><button class="emoji" data-e="🌍">🌍</button><button class="emoji" data-e="❤">❤</button><button class="emoji" data-e="️">️</button><button class="emoji" data-e="⭐">⭐</button></div>',
+    '<button class="cat-btn alt" onclick="manageCustomCategories()">Cancel</button><button class="cat-btn" onclick="saveCatRename(\''+o+'\')">✓ Save</button>'
+  );
+  // Pre-select current emoji
+  setTimeout(()=>{
+    const grid=document.getElementById('rename-emoji-grid');
+    if(!grid) return;
+    grid.querySelectorAll('.emoji').forEach(b=>{
+      if(b.dataset.e===curE) b.classList.add('sel');
+    });
+    grid.addEventListener('click',ev=>{
+      const btn=ev.target.closest('.emoji');
+      if(!btn) return;
+      grid.querySelectorAll('.emoji').forEach(y=>y.classList.remove('sel'));
+      btn.classList.add('sel');
+    });
+  },50);
+}
+function saveCatRename(o){
+  let n=document.getElementById('renameName').value.trim();
+  if(!n)return toast('Enter a category name');
+  let ct=CATS.find(x=>x.n===o);
+  if(!ct)return toast('Category not found');
+  const selE=document.querySelector('#rename-emoji-grid .emoji.sel');
+  if(selE) ct.e=selE.dataset.e;
+  ct.n=n;
+  txns.forEach(t=>{if(t.cat===o)t.cat=n});
+  // update budget keys
+  if(budgets[o]!==undefined){budgets[n]=budgets[o];delete budgets[o];localStorage.setItem('paisa_bdg',JSON.stringify(budgets));}
+  persist();saveCustomCategories();selCat=n;renderChips();closeCatModal();toast('Category renamed ✓');
+}
 function deleteCategory(n){catModal('Delete category','<p>Delete <b>'+n+'</b>?</p>','<button class="cat-btn alt" onclick="manageCustomCategories()">Cancel</button><button class="cat-btn delmain" onclick="confirmDelete(\''+n+'\')">Delete</button>')}
 function confirmDelete(n){let c=CATS.find(x=>x.n===n);CATS.splice(CATS.indexOf(c),1);saveCustomCategories();const ii=INC_CATS.indexOf(n);if(ii>-1){INC_CATS.splice(ii,1);saveIncCats();}const si=SAV_CATS.indexOf(n);if(si>-1){SAV_CATS.splice(si,1);saveSavCats();}renderChips();closeCatModal();toast('Category removed ✓')}
 // v3 - all data persists in localStorage; never wiped on app update
@@ -1158,7 +1233,7 @@ function rowHTML(t){
   const c=C(t.cat),d=new Date(t.date+'T12:00').toLocaleDateString('en-IN',{day:'numeric',month:'short'});
   return`<div class="tr" onclick="openSheet(${t.id})">
     <div class="ti" style="background:${c.bg}">${c.e}</div>
-    <div class="tb"><div class="tn">${t.desc}</div><div class="tm">${t.cat} · ${t.mode} · ${d}</div></div>
+    <div class="tb"><div class="tn">${t.desc}</div><div class="tm">${t.cat} · ${t.mode==='Credit Card 1'?_cn1:t.mode==='Credit Card 2'?_cn2:t.mode} · ${d}</div></div>
     <div class="ta${t.type==='inc'?' inc':t.type==='sav'?' sav':''}">${t.type==='inc'?'+':t.type==='sav'?'🏦':'−'}${fmt(t.amt)}</div>
   </div>`;
 }
@@ -1186,7 +1261,7 @@ function renderAll(){
   if(q) data=data.filter(t=>
     (t.desc||'').toLowerCase().includes(q)||
     (t.cat||'').toLowerCase().includes(q)||
-    (t.mode||'').toLowerCase().includes(q)||
+    (t.mode==='Credit Card 1'?_cn1:t.mode==='Credit Card 2'?_cn2:t.mode||'').toLowerCase().includes(q)||
     String(t.amt).includes(q)||
     (t.date||'').includes(q)
   );
@@ -1205,7 +1280,7 @@ function renderAll(){
       <div style="display:flex;flex-direction:column;gap:3px;">${groups[date].map(t=>`
         <div class="tr" style="padding-right:6px">
           <div class="ti" style="background:${C(t.cat).bg}" onclick="openSheet(${t.id})">${C(t.cat).e}</div>
-          <div class="tb" onclick="openSheet(${t.id})"><div class="tn">${t.desc}</div><div class="tm">${t.cat} · ${t.mode}</div></div>
+          <div class="tb" onclick="openSheet(${t.id})"><div class="tn">${t.desc}</div><div class="tm">${t.cat} · ${t.mode==='Credit Card 1'?_cn1:t.mode==='Credit Card 2'?_cn2:t.mode}</div></div>
           <div class="ta${t.type==='inc'?' inc':t.type==='sav'?' sav':''}" onclick="openSheet(${t.id})">${t.type==='inc'?'+':t.type==='sav'?'🏦':'−'}${fmt(t.amt)}</div>
           <button class="del-btn" onclick="del(${t.id})">×</button>
         </div>`).join('')}</div></div>`;
@@ -1276,7 +1351,7 @@ function openDrill(catName){
       const d=new Date(t.date+'T12:00').toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
       return `<div class="tr" onclick="openSheet(${t.id})">
         <div class="ti" style="background:${cat.bg}">${cat.e}</div>
-        <div class="tb"><div class="tn">${t.desc}</div><div class="tm">${t.mode} · ${d}</div></div>
+        <div class="tb"><div class="tn">${t.desc}</div><div class="tm">${t.mode==='Credit Card 1'?_cn1:t.mode==='Credit Card 2'?_cn2:t.mode} · ${d}</div></div>
         <div class="ta">${fmt(t.amt)}</div>
       </div>`;
     }).join('');
@@ -1330,6 +1405,10 @@ function renderMore(){
     <div class="stat-box"><div class="stat-label">This month</div><div class="stat-val">${mT.length} txns</div></div>
     <div class="stat-box"><div class="stat-label">Total spent</div><div class="stat-val" style="color:var(--red)">${fmt(totE)}</div></div>
     <div class="stat-box"><div class="stat-label">Total income</div><div class="stat-val" style="color:var(--green)">${fmt(totI)}</div></div>`;
+  // Init dark mode toggle
+  const darkTog=document.getElementById('dark-mode-toggle');
+  if(darkTog) darkTog.checked=localStorage.getItem('paisa_dark_mode')==='1';
+  initDarkMode();
   // Init EOD time and notification toggle
   const eodInp=document.getElementById('eod-time-input');
   if(eodInp)eodInp.value=localStorage.getItem('paisa_eod_time')||'21:00';
@@ -1437,8 +1516,21 @@ function saveBudgets(){
 // Export
 function dl(name,content,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([content],{type}));a.download=name;a.click();}
 function xCSV(){
-  dl('paisa-export.csv',['Date,Description,Category,Type,Amount,Mode',...txns.map(t=>`${t.date},"${t.desc}",${t.cat},${t.type==='exp'?'Expense':'Income'},${t.amt},${t.mode}`)].join('\n'),'text/csv');
+  dl('paisa-export.csv',['Date,Description,Category,Type,Amount,Mode',...txns.map(t=>`${t.date},"${t.desc}",${t.cat},${t.type==='exp'?'Expense':'Income'},${t.amt},${t.mode==='Credit Card 1'?_cn1:t.mode==='Credit Card 2'?_cn2:t.mode}`)].join('\n'),'text/csv');
   toast('CSV downloaded');
+}
+function xExcel(){
+  const _cn1=ccName(1),_cn2=ccName(2);
+  const rows=txns.map(t=>[t.date,t.type==='exp'?'Expense':t.type==='inc'?'Income':'Savings',t.cat,t.desc||'',t.amt,(t.mode==='Credit Card 1'?_cn1:t.mode==='Credit Card 2'?_cn2:t.mode)]);
+  let tbl='<table><tr><th>Date</th><th>Type</th><th>Category</th><th>Description</th><th>Amount</th><th>Mode</th></tr>';
+  rows.forEach(r=>{tbl+='<tr>'+r.map(v=>'<td>'+v+'</td>').join('')+'</tr>';});
+  tbl+='</table>';
+  const html='<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="UTF-8"><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>Paisa</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--></head><body>'+tbl+'</body></html>';
+  const blob=new Blob([html],{type:'application/vnd.ms-excel;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download='paisa-transactions.xls';a.click();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+  toast('Excel file downloaded ✓');
 }
 function xJSON(){dl('paisa-backup.json',JSON.stringify({txns,budgets,exported:new Date().toISOString()},null,2),'application/json');toast('Backup downloaded');}
 function xPDF(){
@@ -1461,6 +1553,7 @@ function xPDF(){
 .modal-card input{width:100%;box-sizing:border-box;margin:6px 0 14px;padding:12px;border:1px solid #ddd;border-radius:10px}
 .modal-actions{display:flex;gap:8px}.modal-actions .save-btn{margin:0;flex:1}
 </style><style>.cat-modal{display:none;position:fixed;inset:0;background:#0007;z-index:999;align-items:flex-end}.cat-modal.show{display:flex}.cat-card{background:#fff;width:100%;padding:24px;border-radius:24px 24px 0 0}.cat-input{width:100%;box-sizing:border-box;padding:13px;border:1px solid #ddd;border-radius:12px}.emoji-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:8px}.emoji,.mini{padding:9px;border:1px solid #ddd;border-radius:10px;background:#fff}.sel{border:2px solid #17221d}.cat-actions{display:flex;gap:10px;margin-top:20px}.cat-btn{flex:1;padding:12px;border:0;border-radius:12px;background:#17221d;color:#fff;font-weight:700}.alt{background:#f3f1eb;color:#17221d}.cat-row{display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid #eee}.del{color:#b42318}.delmain{background:#b42318;color:#fff}.delmain{background:#b42318;color:#fff}.home-mascot-top{position:absolute;right:18px;top:16px;font-size:38px;z-index:5;animation:lion 2.5s infinite}@keyframes lion{50%{transform:translateY(-5px)}}</style></head><body>
+<script>try{if(localStorage.getItem("paisa_dark_mode")==="1")document.body.classList.add("dark-mode");}catch(e){}</script>
   <h1>Paisa — Monthly Report</h1><p style="color:#999">${mn}</p>
   <div class="cards">
     <div class="card"><div class="cl">Spent</div><div class="cv" style="color:#d94f3d">${fmt(sp)}</div></div>
@@ -1469,7 +1562,7 @@ function xPDF(){
   </div>
   <h2>By category</h2><table><tr><th>Category</th><th>Amount</th></tr>${Object.entries(tot).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<tr><td>${k}</td><td>${fmt(v)}</td></tr>`).join('')}</table>
   <h2>Transactions (${mt.length})</h2><table><tr><th>Date</th><th>Description</th><th>Category</th><th>Amount</th><th>Mode</th></tr>
-  ${mt.slice(0,60).map(t=>`<tr><td>${t.date}</td><td>${t.desc}</td><td>${t.cat}</td><td style="color:${t.type==='inc'?'#2d7a5f':'#d94f3d'}">${t.type==='inc'?'+':'−'}${fmt(t.amt)}</td><td>${t.mode}</td></tr>`).join('')}</table>
+  ${mt.slice(0,60).map(t=>`<tr><td>${t.date}</td><td>${t.desc}</td><td>${t.cat}</td><td style="color:${t.type==='inc'?'#2d7a5f':'#d94f3d'}">${t.type==='inc'?'+':'−'}${fmt(t.amt)}</td><td>${t.mode==='Credit Card 1'?_cn1:t.mode==='Credit Card 2'?_cn2:t.mode}</td></tr>`).join('')}</table>
   
 `);w.document.close();w.print();toast('PDF opened');
 }
@@ -1515,7 +1608,7 @@ function toast(msg){
 }
 
 // Init
-initInspireDaily();initEODNotification();renderHome();renderChips();loadCCNames();
+initDarkMode();initInspireDaily();initEODNotification();renderHome();renderChips();loadCCNames();
 
 
 
@@ -1534,13 +1627,34 @@ function saveCCRename(){
   localStorage.setItem('paisa_cc'+_renameCard+'_name',v);
   document.getElementById('cc'+_renameCard+'-name-lbl').textContent='💳 '+v;
   document.getElementById('renameModal').style.display='none';
+  loadCCNames();
   toast('Card renamed ✓');
 }
+
+// Get CC display name (always reads fresh from storage)
+function ccName(n){return localStorage.getItem('paisa_cc'+n+'_name')||'Credit Card '+n;}
+
 function loadCCNames(){
-  const n1=localStorage.getItem('paisa_cc1_name');
-  const n2=localStorage.getItem('paisa_cc2_name');
-  if(n1){const el=document.getElementById('cc1-name-lbl');if(el)el.textContent='💳 '+n1;}
-  if(n2){const el=document.getElementById('cc2-name-lbl');if(el)el.textContent='💳 '+n2;}
+  const n1=ccName(1), n2=ccName(2);
+  // Home page section headers
+  const el1=document.getElementById('cc1-name-lbl');if(el1)el1.textContent='💳 '+n1;
+  const el2=document.getElementById('cc2-name-lbl');if(el2)el2.textContent='💳 '+n2;
+  // More page toggle labels
+  const tl1=document.getElementById('cc-toggle-lbl1');if(tl1)tl1.textContent='💳 Enable '+n1;
+  const tl2=document.getElementById('cc-toggle-lbl2');if(tl2)tl2.textContent='💳 Enable '+n2;
+  // Payment mode select options
+  const modeEl=document.getElementById('mode');
+  if(modeEl){
+    [...modeEl.options].forEach(o=>{
+      if(o.value==='Credit Card 1') o.text=n1;
+      if(o.value==='Credit Card 2') o.text=n2;
+    });
+  }
+  // Home CC payments section heads
+  const ph1=document.getElementById('cc-payments-head');
+  if(ph1){const h=ph1.querySelector('h2');if(h)h.textContent=n1+' Payments';}
+  const ph2=document.getElementById('cc2-payments-head');
+  if(ph2){const h=ph2.querySelector('h2');if(h)h.textContent=n2+' Payments';}
 }
 
 
@@ -1558,7 +1672,7 @@ async function runAISearch(){
   const resultEl=document.getElementById('ai-search-result');
   resultEl.style.display='block';
   resultEl.textContent='🔄 Thinking...';
-  const txnSummary=txns.slice(0,500).map(t=>`${t.date} ${t.type} ₹${t.amt} ${t.cat} "${t.desc}" ${t.mode}`).join('\n');
+  const txnSummary=txns.slice(0,500).map(t=>`${t.date} ${t.type} ₹${t.amt} ${t.cat} "${t.desc}" ${t.mode==='Credit Card 1'?_cn1:t.mode==='Credit Card 2'?_cn2:t.mode}`).join('\n');
   try{
     const resp=await fetch('https://api.anthropic.com/v1/messages',{
       method:'POST',
@@ -1808,7 +1922,7 @@ function showPredictions(){
   let el=document.getElementById('amt-predictions');
   if(!el){el=document.createElement('div');el.id='amt-predictions';el.style.cssText='margin:0 20px 10px;display:flex;flex-wrap:wrap;gap:6px;';document.getElementById('amt').closest('.amt-wrap').after(el);}
   if(!pred.length){el.innerHTML='';return;}
-  el.innerHTML=pred.map(t=>`<button onclick="applyPrediction(${t.id})" style="padding:5px 10px;border-radius:99px;border:1px solid var(--gold);background:var(--gold-pale);font-size:12px;color:var(--gold-d);cursor:pointer;font-family:inherit">${t.cat} · "${t.desc}" · ${t.mode}</button>`).join('');
+  el.innerHTML=pred.map(t=>`<button onclick="applyPrediction(${t.id})" style="padding:5px 10px;border-radius:99px;border:1px solid var(--gold);background:var(--gold-pale);font-size:12px;color:var(--gold-d);cursor:pointer;font-family:inherit">${t.cat} · "${t.desc}" · ${t.mode==='Credit Card 1'?_cn1:t.mode==='Credit Card 2'?_cn2:t.mode}</button>`).join('');
 }
 function applyPrediction(id){
   const t=txns.find(x=>x.id===id);if(!t)return;
@@ -2101,6 +2215,44 @@ function renderInspireLines(){
   if(badge) badge.style.display=lines.length?'inline':'none';
 }
 
+
+// Inspire multi-select
+function updateInspireSelBtn(){
+  const checked=document.querySelectorAll('[id^="ichk-"]:checked');
+  const btn=document.getElementById('inspire-del-sel-btn');
+  if(btn) btn.style.display=checked.length?'block':'none';
+}
+function toggleInspireSelectAll(){
+  const lines=JSON.parse(localStorage.getItem('paisa_inspire_lines')||'[]');
+  const allBoxes=document.querySelectorAll('[id^="ichk-"]');
+  const allChecked=[...allBoxes].every(b=>b.checked);
+  allBoxes.forEach(b=>b.checked=!allChecked);
+  const btn=document.getElementById('inspire-sel-all-btn');
+  if(btn) btn.textContent=allChecked?'☐ Select all':'☑ Deselect all';
+  updateInspireSelBtn();
+}
+function deleteSelectedInspireLines(){
+  const checked=[...document.querySelectorAll('[id^="ichk-"]:checked')];
+  if(!checked.length) return;
+  const indices=checked.map(b=>parseInt(b.id.replace('ichk-','')));
+  document.getElementById('inspire-all-modal').style.display='none';
+  showConfirm('🗑️',`Delete ${indices.length} line${indices.length>1?'s':''}?`,
+    `${indices.length} inspiration line${indices.length>1?'s':''} will be permanently removed.`,
+    ()=>{
+      let lines=JSON.parse(localStorage.getItem('paisa_inspire_lines')||'[]');
+      const cur=localStorage.getItem('paisa_inspire_msg')||'';
+      const toDelete=new Set(indices.map(i=>lines[i]));
+      if(toDelete.has(cur)) localStorage.removeItem('paisa_inspire_msg');
+      lines=lines.filter((_,i)=>!indices.includes(i));
+      localStorage.setItem('paisa_inspire_lines',JSON.stringify(lines));
+      renderInspireLines();renderHome();
+      if(lines.length) openInspireAll();
+      toast(`${indices.length} line${indices.length>1?'s':''} deleted`);
+    }
+  );
+  document.getElementById('confirmCancel').onclick=()=>{closeConfirm();openInspireAll();};
+}
+
 // Full-screen inspire modal
 function openInspireAll(){
   const lines=JSON.parse(localStorage.getItem('paisa_inspire_lines')||'[]');
@@ -2130,10 +2282,15 @@ function openInspireAll(){
     </div>
     <!-- Lines list -->
     <div id="inspire-modal-list" style="flex:1;overflow-y:auto;padding:12px 20px;display:flex;flex-direction:column;gap:8px">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:0 0 8px">
+        <button onclick="toggleInspireSelectAll()" style="font-size:12px;color:var(--ink3);background:none;border:1px solid var(--rule);border-radius:8px;padding:5px 10px;cursor:pointer;font-family:inherit" id="inspire-sel-all-btn">☐ Select all</button>
+        <button onclick="deleteSelectedInspireLines()" id="inspire-del-sel-btn" style="display:none;font-size:12px;color:#fff;background:var(--red);border:none;border-radius:8px;padding:5px 12px;cursor:pointer;font-family:inherit;font-weight:600">🗑 Delete selected</button>
+      </div>
       ${lines.length?lines.map((line,i)=>`
-        <div class="inspire-card ${line===cur?'selected':''}" id="icard-${i}" onclick="selectInspireLineAll(${i})">
-          <div class="ic-radio"></div>
-          <div class="ic-text" id="itext-${i}">${line}</div>
+        <div class="inspire-card ${line===cur?'selected':''}" id="icard-${i}">
+          <input type="checkbox" id="ichk-${i}" onclick="event.stopPropagation();updateInspireSelBtn()" style="width:16px;height:16px;accent-color:var(--gold-d);cursor:pointer;flex-shrink:0">
+          <div class="ic-radio" onclick="selectInspireLineAll(${i})"></div>
+          <div class="ic-text" id="itext-${i}" onclick="selectInspireLineAll(${i})">${line}</div>
           <button class="ic-del" onclick="event.stopPropagation();editInspireLine(${i})" title="Edit" style="color:var(--gold-d);font-size:13px">✏️</button>
           <button class="ic-del" onclick="event.stopPropagation();confirmDeleteInspire(${i})" title="Remove">×</button>
         </div>`).join('')
@@ -2302,6 +2459,31 @@ function quickFilter(type){
   const map={today:td(),food:'food',shopping:'shopping',upi:'upi',credit:'credit card'};
   inp.value=map[type]||type;
   renderAll();
+}
+
+
+// Dark Mode
+function toggleDarkMode(enabled){
+  localStorage.setItem('paisa_dark_mode', enabled?'1':'0');
+  applyDarkMode(enabled);
+  const lbl=document.getElementById('dark-mode-label');
+  const sub=document.getElementById('dark-mode-sub');
+  if(lbl) lbl.textContent=enabled?'☀️ Light Mode':'🌙 Dark Mode';
+  if(sub) sub.textContent=enabled?'Switch to light theme':'Switch to dark theme';
+  toast(enabled?'Dark mode on 🌙':'Light mode on ☀️');
+}
+function applyDarkMode(enabled){
+  document.body.classList.toggle('dark-mode', enabled);
+}
+function initDarkMode(){
+  const enabled=localStorage.getItem('paisa_dark_mode')==='1';
+  applyDarkMode(enabled);
+  const tog=document.getElementById('dark-mode-toggle');
+  if(tog) tog.checked=enabled;
+  const lbl=document.getElementById('dark-mode-label');
+  const sub=document.getElementById('dark-mode-sub');
+  if(lbl) lbl.textContent=enabled?'☀️ Light Mode':'🌙 Dark Mode';
+  if(sub) sub.textContent=enabled?'Switch to light theme':'Switch to dark theme';
 }
 
 // ===== PIN PROTECTION =====
