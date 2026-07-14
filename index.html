@@ -649,6 +649,8 @@ body.dark-mode .si-result{background:#1c1700;border-color:#f0b429;}
 <select class="chart-select" id="spent-range" onchange="renderHome()"><option value="month">Current Month</option><option value="3m">Last 3 Months</option><option value="6m">Last 6 Months</option><option value="year">Current Year</option></select>
 <select class="chart-select" id="spent-mode" onchange="renderHome()"><option value="all">All Payments</option><option value="cc">Credit Cards</option><option value="other">Non-Credit-Card Payments</option></select>
 </div>
+      <div class="sec-head"><h2>💡 Financial Coach</h2><button onclick="renderCoach()" style="font-size:12px;color:var(--gold-d)">Refresh</button></div>
+      <div id="coach-cards" style="padding:0 20px 4px;display:flex;flex-direction:column;gap:8px"></div>
       <div class="sec-head"><h2>Recent</h2><button onclick="nav('all')">See all</button></div>
       <div class="feed" id="home-feed"></div>
     </div>
@@ -1103,6 +1105,7 @@ body.dark-mode .si-result{background:#1c1700;border-color:#f0b429;}
 <input type="file" id="imp" accept=".json" style="display:none" onchange="onImport(event)">
 
 <script>
+
 const CATS=[
   {n:'Food',e:'🍜',c:'#d94f3d',bg:'#fdf0ee'},
   {n:'Transport',e:'🚌',c:'#3a6bbf',bg:'#edf2fc'},
@@ -1479,7 +1482,7 @@ function rowHTML(t){
   const c=C(t.cat),d=new Date(t.date+'T12:00').toLocaleDateString('en-IN',{day:'numeric',month:'short'});
   return`<div class="tr" onclick="openSheet(${t.id})">
     <div class="ti" style="background:${c.bg}">${c.e}</div>
-    <div class="tb"><div class="tn">${t.desc}</div><div class="tm">${t.cat} · ${t.mode==='Credit Card 1'?_cn1:t.mode==='Credit Card 2'?_cn2:t.mode} · ${d}</div></div>
+    <div class="tb"><div class="tn">${t.desc}</div><div class="tm">${t.cat} · ${t.mode==='Credit Card 1'?ccName(1):t.mode==='Credit Card 2'?ccName(2):t.mode} · ${d}</div></div>
     <div class="ta${t.type==='inc'?' inc':t.type==='sav'?' sav':''}">${t.type==='inc'?'+':t.type==='sav'?'🏦':'−'}${fmt(t.amt)}</div>
   </div>`;
 }
@@ -1507,7 +1510,7 @@ function renderAll(){
   if(q) data=data.filter(t=>
     (t.desc||'').toLowerCase().includes(q)||
     (t.cat||'').toLowerCase().includes(q)||
-    (t.mode==='Credit Card 1'?_cn1:t.mode==='Credit Card 2'?_cn2:t.mode||'').toLowerCase().includes(q)||
+    (t.mode==='Credit Card 1'?ccName(1):t.mode==='Credit Card 2'?ccName(2):t.mode||'').toLowerCase().includes(q)||
     String(t.amt).includes(q)||
     (t.date||'').includes(q)
   );
@@ -1526,7 +1529,7 @@ function renderAll(){
       <div style="display:flex;flex-direction:column;gap:3px;">${groups[date].map(t=>`
         <div class="tr" style="padding-right:6px">
           <div class="ti" style="background:${C(t.cat).bg}" onclick="openSheet(${t.id})">${C(t.cat).e}</div>
-          <div class="tb" onclick="openSheet(${t.id})"><div class="tn">${t.desc}</div><div class="tm">${t.cat} · ${t.mode==='Credit Card 1'?_cn1:t.mode==='Credit Card 2'?_cn2:t.mode}</div></div>
+          <div class="tb" onclick="openSheet(${t.id})"><div class="tn">${t.desc}</div><div class="tm">${t.cat} · ${t.mode==='Credit Card 1'?ccName(1):t.mode==='Credit Card 2'?ccName(2):t.mode}</div></div>
           <div class="ta${t.type==='inc'?' inc':t.type==='sav'?' sav':''}" onclick="openSheet(${t.id})">${t.type==='inc'?'+':t.type==='sav'?'🏦':'−'}${fmt(t.amt)}</div>
           <button class="del-btn" onclick="del(${t.id})">×</button>
         </div>`).join('')}</div></div>`;
@@ -1599,7 +1602,7 @@ function openDrill(idx){
       const d=new Date(t.date+'T12:00').toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
       return `<div class="tr" onclick="openSheet(${t.id})">
         <div class="ti" style="background:${cat.bg}">${cat.e}</div>
-        <div class="tb"><div class="tn">${t.desc}</div><div class="tm">${t.mode==='Credit Card 1'?_cn1:t.mode==='Credit Card 2'?_cn2:t.mode} · ${d}</div></div>
+        <div class="tb"><div class="tn">${t.desc}</div><div class="tm">${t.mode==='Credit Card 1'?ccName(1):t.mode==='Credit Card 2'?ccName(2):t.mode} · ${d}</div></div>
         <div class="ta">${fmt(t.amt)}</div>
       </div>`;
     }).join('');
@@ -1764,12 +1767,11 @@ function saveBudgets(){
 // Export
 function dl(name,content,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([content],{type}));a.download=name;a.click();}
 function xCSV(){
-  dl('paisa-export.csv',['Date,Description,Category,Type,Amount,Mode',...txns.map(t=>`${t.date},"${t.desc}",${t.cat},${t.type==='exp'?'Expense':'Income'},${t.amt},${t.mode==='Credit Card 1'?_cn1:t.mode==='Credit Card 2'?_cn2:t.mode}`)].join('\n'),'text/csv');
+  dl('paisa-export.csv',['Date,Description,Category,Type,Amount,Mode',...txns.map(t=>`${t.date},"${t.desc}",${t.cat},${t.type==='exp'?'Expense':'Income'},${t.amt},${t.mode==='Credit Card 1'?ccName(1):t.mode==='Credit Card 2'?ccName(2):t.mode}`)].join('\n'),'text/csv');
   toast('CSV downloaded');
 }
 function xExcel(){
-  const _cn1=ccName(1),_cn2=ccName(2);
-  const rows=txns.map(t=>[t.date,t.type==='exp'?'Expense':t.type==='inc'?'Income':'Savings',t.cat,t.desc||'',t.amt,(t.mode==='Credit Card 1'?_cn1:t.mode==='Credit Card 2'?_cn2:t.mode)]);
+  const rows=txns.map(t=>[t.date,t.type==='exp'?'Expense':t.type==='inc'?'Income':'Savings',t.cat,t.desc||'',t.amt,(t.mode==='Credit Card 1'?ccName(1):t.mode==='Credit Card 2'?ccName(2):t.mode)]);
   let tbl='<table><tr><th>Date</th><th>Type</th><th>Category</th><th>Description</th><th>Amount</th><th>Mode</th></tr>';
   rows.forEach(r=>{tbl+='<tr>'+r.map(v=>'<td>'+v+'</td>').join('')+'</tr>';});
   tbl+='</table>';
@@ -1845,7 +1847,7 @@ function xPDF(){
   </div>
   <h2>By category</h2><table><tr><th>Category</th><th>Amount</th></tr>${Object.entries(tot).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<tr><td>${k}</td><td>${fmt(v)}</td></tr>`).join('')}</table>
   <h2>Transactions (${mt.length})</h2><table><tr><th>Date</th><th>Description</th><th>Category</th><th>Amount</th><th>Mode</th></tr>
-  ${mt.slice(0,60).map(t=>`<tr><td>${t.date}</td><td>${t.desc}</td><td>${t.cat}</td><td style="color:${t.type==='inc'?'#2d7a5f':'#d94f3d'}">${t.type==='inc'?'+':'−'}${fmt(t.amt)}</td><td>${t.mode==='Credit Card 1'?_cn1:t.mode==='Credit Card 2'?_cn2:t.mode}</td></tr>`).join('')}</table>
+  ${mt.slice(0,60).map(t=>`<tr><td>${t.date}</td><td>${t.desc}</td><td>${t.cat}</td><td style="color:${t.type==='inc'?'#2d7a5f':'#d94f3d'}">${t.type==='inc'?'+':'−'}${fmt(t.amt)}</td><td>${t.mode==='Credit Card 1'?ccName(1):t.mode==='Credit Card 2'?ccName(2):t.mode}</td></tr>`).join('')}</table>
   
 `);w.document.close();w.print();toast('PDF opened');
 }
@@ -1991,7 +1993,7 @@ async function runAISearch(){
   const resultEl=document.getElementById('ai-search-result');
   resultEl.style.display='block';
   resultEl.textContent='🔄 Thinking...';
-  const txnSummary=txns.slice(0,500).map(t=>`${t.date} ${t.type} ₹${t.amt} ${t.cat} "${t.desc}" ${t.mode==='Credit Card 1'?_cn1:t.mode==='Credit Card 2'?_cn2:t.mode}`).join('\n');
+  const txnSummary=txns.slice(0,500).map(t=>`${t.date} ${t.type} ₹${t.amt} ${t.cat} "${t.desc}" ${t.mode==='Credit Card 1'?ccName(1):t.mode==='Credit Card 2'?ccName(2):t.mode}`).join('\n');
   try{
     const resp=await fetch('https://api.anthropic.com/v1/messages',{
       method:'POST',
@@ -2264,7 +2266,7 @@ function showPredictions(){
   let el=document.getElementById('amt-predictions');
   if(!el){el=document.createElement('div');el.id='amt-predictions';el.style.cssText='margin:0 20px 10px;display:flex;flex-wrap:wrap;gap:6px;';document.getElementById('amt').closest('.amt-wrap').after(el);}
   if(!pred.length){el.innerHTML='';return;}
-  el.innerHTML=pred.map(t=>`<button onclick="applyPrediction(${t.id})" style="padding:5px 10px;border-radius:99px;border:1px solid var(--gold);background:var(--gold-pale);font-size:12px;color:var(--gold-d);cursor:pointer;font-family:inherit">${t.cat} · "${t.desc}" · ${t.mode==='Credit Card 1'?_cn1:t.mode==='Credit Card 2'?_cn2:t.mode}</button>`).join('');
+  el.innerHTML=pred.map(t=>`<button onclick="applyPrediction(${t.id})" style="padding:5px 10px;border-radius:99px;border:1px solid var(--gold);background:var(--gold-pale);font-size:12px;color:var(--gold-d);cursor:pointer;font-family:inherit">${t.cat} · "${t.desc}" · ${t.mode==='Credit Card 1'?ccName(1):t.mode==='Credit Card 2'?ccName(2):t.mode}</button>`).join('');
 }
 function applyPrediction(id){
   const t=txns.find(x=>x.id===id);if(!t)return;
@@ -2949,6 +2951,7 @@ function initDarkMode(){
   });
 })();
 // ===== END PIN =====
+
 
 </script>
 <script>
