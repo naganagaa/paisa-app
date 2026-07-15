@@ -124,7 +124,7 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:#fafaf8;color:#0f0f0f
 .c-tabs{display:flex;gap:6px;padding:14px 20px 0;}
 .ctab{padding:7px 16px;border-radius:99px;border:1px solid var(--rule);background:var(--surface);font-size:13px;font-weight:500;cursor:pointer;color:var(--ink3);font-family:inherit;}
 .ctab.on{background:var(--ink);color:#fff;border-color:var(--ink);}
-.chart-controls{display:flex;gap:8px;padding:14px 20px 0;align-items:center}.chart-select{margin-left:auto;padding:7px 12px;border:1px solid var(--rule);border-radius:99px;background:var(--surface);font:inherit;font-size:13px;color:var(--ink);cursor:pointer}.payment-row{display:flex;align-items:center;gap:12px;padding:12px 14px;margin:0 16px 8px;background:var(--surface);border:1px solid var(--rule);border-radius:var(--r-md)}.payment-icon{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--cream);font-size:16px}.payment-info{flex:1;min-width:0}.payment-amount{font-family:'DM Mono',monospace;font-size:14px;font-weight:500;color:var(--green)}.payment-meta{font-size:11px;color:var(--ink3);margin-top:3px}.payment-delete{border:1px solid var(--rule);background:var(--surface);border-radius:8px;width:32px;height:32px;color:var(--red);cursor:pointer;font-size:15px}.chart-box{margin:14px 20px 0;background:var(--surface);border:1px solid var(--rule);border-radius:var(--r-lg);padding:16px;height:210px;position:relative;}
+.chart-controls{display:flex;gap:8px;padding:14px 20px 0;align-items:center}.chart-select{margin-left:auto;padding:7px 12px;border:1px solid var(--rule);border-radius:99px;background:var(--surface);font:inherit;font-size:13px;color:var(--ink);cursor:pointer}.payment-row{display:flex;align-items:center;gap:12px;padding:12px 14px;margin:0 16px 8px;background:var(--surface);border:1px solid var(--rule);border-radius:var(--r-md)}.payment-icon{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--cream);font-size:16px}.payment-info{flex:1;min-width:0}.payment-amount{font-family:'DM Mono',monospace;font-size:14px;font-weight:500;color:var(--green)}.payment-meta{font-size:11px;color:var(--ink3);margin-top:3px}.payment-delete{border:1px solid var(--rule);background:var(--surface);border-radius:8px;width:32px;height:32px;color:var(--red);cursor:pointer;font-size:15px}.chart-box{margin:14px 20px 0;background:var(--surface);border:1px solid var(--rule);border-radius:var(--r-lg);padding:16px;height:240px;position:relative;}
 .cat-list{padding:0 20px;display:flex;flex-direction:column;gap:10px;}
 .cbr{display:flex;align-items:center;gap:10px;}
 .cbi{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
@@ -430,6 +430,12 @@ body.dark-mode .cat-modal-wrap{background:#131313;}
 body.dark-mode .cat-card{background:#1a1a1a;}
 body.dark-mode .cat-input{background:#222222;border-color:#333333;color:#f0ede8;}
 body.dark-mode .cat-btn{background:#f0b429;color:#0d0d0d;}
+/* Any "solid dark" action button (was background:var(--ink);color:#fff, which
+   turned invisible in dark mode since --ink flips to near-white there) */
+.solid-btn{background:var(--ink)!important;color:#fff!important;}
+.solid-btn svg{stroke:#fff!important;}
+body.dark-mode .solid-btn{background:#f0b429!important;color:#0d0d0d!important;}
+body.dark-mode .solid-btn svg{stroke:#0d0d0d!important;}
 body.dark-mode .cat-btn.alt{background:#222222;color:#f0ede8;border:1px solid #333333;}
 body.dark-mode .emoji{background:#222222;border-color:#333333;}
 body.dark-mode .emoji.sel{border-color:#f0b429;background:#1c1600;}
@@ -676,7 +682,7 @@ body.dark-mode .si-result{background:#1c1700;border-color:#f0b429;}
       <div style="padding:14px 20px 0">
         <!-- Search mode toggle -->
         <div style="display:flex;background:var(--rule2);border-radius:99px;padding:3px;margin-bottom:10px;width:fit-content">
-          <button id="srch-tab-quick" onclick="switchSearchMode('quick')" style="padding:6px 16px;border-radius:99px;border:none;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;background:var(--ink);color:#fff;transition:all .15s">🔍 Search</button>
+          <button id="srch-tab-quick" class="solid-btn" onclick="switchSearchMode('quick')" style="padding:6px 16px;border-radius:99px;border:none;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s">🔍 Search</button>
           <button id="srch-tab-ai" onclick="switchSearchMode('ai')" style="padding:6px 16px;border-radius:99px;border:none;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;background:none;color:var(--ink3);transition:all .15s">🧠 Ask AI</button>
         </div>
         <!-- Quick search -->
@@ -697,7 +703,7 @@ body.dark-mode .si-result{background:#1c1700;border-color:#f0b429;}
               style="flex:1;padding:12px 14px;border:1.5px solid var(--rule);border-radius:var(--r-lg);background:var(--paper);font-family:inherit;font-size:14px;color:var(--ink);outline:none;transition:border-color .15s"
               onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--rule)'"
               onkeydown="if(event.key==='Enter')runAISearch()">
-            <button onclick="runAISearch()" style="width:44px;height:44px;background:var(--ink);color:#fff;border:none;border-radius:var(--r-lg);cursor:pointer;font-size:18px;flex-shrink:0">→</button>
+            <button class="solid-btn" onclick="runAISearch()" style="width:44px;height:44px;border:none;border-radius:var(--r-lg);cursor:pointer;font-size:18px;flex-shrink:0">→</button>
           </div>
           <div style="font-size:11px;color:var(--ink3);margin-top:6px;padding:0 2px">Uses AI · ~₹0.10 per query · Needs API key in More</div>
         </div>
@@ -771,7 +777,7 @@ body.dark-mode .si-result{background:#1c1700;border-color:#f0b429;}
             <span id="inspire-current-text" style="font-size:13px;color:var(--gold-d);font-style:italic;flex:1;line-height:1.5">No line selected yet</span>
           </div>
           <!-- Single action button -->
-          <button onclick="openInspireAll()" style="width:100%;padding:14px;background:var(--ink);color:#fff;border:none;border-radius:var(--r-lg);font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">
+          <button class="solid-btn" onclick="openInspireAll()" style="width:100%;padding:14px;border:none;border-radius:var(--r-lg);font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">
             <span>⚙️</span>
             <span>Manage Inspiration</span>
             <span id="inspire-count-badge" style="background:rgba(255,255,255,.2);color:#fff;border-radius:99px;padding:2px 8px;font-size:11px;font-weight:600"></span>
@@ -906,8 +912,8 @@ body.dark-mode .si-result{background:#1c1700;border-color:#f0b429;}
       <span>Insights</span>
     </button>
     <button class="nb" id="nb-add" onclick="openSheet()" style="flex:1.2">
-      <div style="width:42px;height:42px;border-radius:50%;background:var(--ink);display:flex;align-items:center;justify-content:center;box-shadow:var(--sh-md);margin-bottom:2px">
-        <svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:#fff;fill:none;stroke-width:2.5;stroke-linecap:round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      <div class="solid-btn" style="width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:var(--sh-md);margin-bottom:2px">
+        <svg viewBox="0 0 24 24" style="width:20px;height:20px;fill:none;stroke-width:2.5;stroke-linecap:round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       </div>
       <span style="color:var(--ink);font-weight:600">Add</span>
     </button>
@@ -1075,7 +1081,7 @@ body.dark-mode .si-result{background:#1c1700;border-color:#f0b429;}
     <!-- Category breakdown -->
     <div id="eod-breakdown" style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px"></div>
     <!-- Done button -->
-    <button onclick="document.getElementById('eod-modal').style.display='none'" style="width:100%;padding:14px;background:var(--ink);color:#fff;border:none;border-radius:14px;font-family:inherit;font-size:15px;font-weight:600;cursor:pointer">Done</button>
+    <button class="solid-btn" onclick="document.getElementById('eod-modal').style.display='none'" style="width:100%;padding:14px;border:none;border-radius:14px;font-family:inherit;font-size:15px;font-weight:600;cursor:pointer">Done</button>
   </div>
 </div>
 <div id="renameModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:2000;align-items:center;justify-content:center">
@@ -1095,7 +1101,7 @@ body.dark-mode .si-result{background:#1c1700;border-color:#f0b429;}
     <h3 style="margin:0 0 8px">Restore Backup</h3>
     <p style="font-size:13px;color:var(--ink3);margin:0 0 20px">Found <b id="importCount">0</b> transactions.<br>How would you like to import?</p>
     <div class="modal-actions" style="flex-direction:column;gap:8px">
-      <button class="save-btn" onclick="doConfirmedImport(false)" style="margin:0;background:var(--ink)">Replace all data</button>
+      <button class="save-btn" onclick="doConfirmedImport(false)" style="margin:0">Replace all data</button>
       <button class="save-btn" onclick="doConfirmedImport(true)" style="margin:0;background:var(--surface);color:var(--ink);border:1px solid var(--rule)">Merge with existing</button>
       <button class="save-btn" onclick="document.getElementById('importModal').style.display='none';window._pendingImport=null;" style="margin:0;background:none;color:var(--ink3);border:none;font-size:13px">Cancel</button>
     </div>
@@ -1148,8 +1154,40 @@ function saveSavCats(){localStorage.setItem('paisa_sav_cats',JSON.stringify(SAV_
 let INC_CATS=JSON.parse(localStorage.getItem('paisa_inc_cats')||JSON.stringify(DEFAULT_INC_CATS));
 function saveIncCats(){localStorage.setItem('paisa_inc_cats',JSON.stringify(INC_CATS));}
 const DEFAULT_CAT_NAMES=CATS.map(c=>c.n);
+
+// ---- Distinct, pleasant colors for user-created categories ----
+// Custom categories (e.g. "Office", or names like "Navya") used to all be
+// hardcoded to the same gray. This assigns each a unique pastel-friendly
+// color from a curated palette, and remembers the assignment per name so
+// it stays stable across sessions.
+const CAT_COLOR_PALETTE=[
+  {c:'#0891b2',bg:'#ecfeff'},{c:'#c026d3',bg:'#fdf4ff'},{c:'#65a30d',bg:'#f7fee7'},
+  {c:'#e11d48',bg:'#fff1f2'},{c:'#7c2d92',bg:'#faf5ff'},{c:'#0d9488',bg:'#f0fdfa'},
+  {c:'#ca8a04',bg:'#fefce8'},{c:'#4338ca',bg:'#eef2ff'},{c:'#be185d',bg:'#fdf2f8'},
+  {c:'#16a34a',bg:'#f0fdf4'},{c:'#9333ea',bg:'#f5f3ff'},{c:'#0284c7',bg:'#f0f9ff'},
+  {c:'#ea580c',bg:'#fff7ed'},{c:'#4d7c0f',bg:'#f7fee7'},{c:'#9d174d',bg:'#fdf2f8'},
+  {c:'#1d4ed8',bg:'#eff6ff'},{c:'#b45309',bg:'#fffbeb'},{c:'#047857',bg:'#ecfdf5'},
+];
+function hashStr(s){let h=0;for(let i=0;i<s.length;i++){h=(h<<5)-h+s.charCodeAt(i);h|=0;}return Math.abs(h);}
+function colorForCategory(name){
+  let assigned={};
+  try{assigned=JSON.parse(localStorage.getItem('paisa_cat_colors')||'{}');}catch(e){}
+  if(assigned[name]) return assigned[name];
+  const used=Object.values(assigned).map(a=>a.c);
+  let pick=CAT_COLOR_PALETTE.find(p=>!used.includes(p.c));
+  if(!pick) pick=CAT_COLOR_PALETTE[hashStr(name)%CAT_COLOR_PALETTE.length];
+  assigned[name]=pick;
+  localStorage.setItem('paisa_cat_colors',JSON.stringify(assigned));
+  return pick;
+}
+
 const SAVED_CUSTOM_CATS=JSON.parse(localStorage.getItem('paisa_custom_categories')||'[]');
-SAVED_CUSTOM_CATS.forEach(c=>{if(c&&c.n&&!CATS.some(x=>x.n===c.n))CATS.push(c);});
+SAVED_CUSTOM_CATS.forEach(c=>{
+  if(!c||!c.n||CATS.some(x=>x.n===c.n)) return;
+  // Migrate anything still stuck on the old hardcoded gray to a real distinct color.
+  if(!c.c||c.c==='#6b7280') Object.assign(c,colorForCategory(c.n));
+  CATS.push(c);
+});
 function saveCustomCategories(){localStorage.setItem('paisa_custom_categories',JSON.stringify(CATS.filter(c=>!DEFAULT_CAT_NAMES.includes(c.n))));}
 function catModal(title,body,actions){let m=document.getElementById('catModal');if(!m){m=document.createElement('div');m.id='catModal';m.className='cat-modal';document.body.appendChild(m)}m.innerHTML='<div class="cat-card"><h2>'+title+'</h2>'+body+'<div class="cat-actions">'+actions+'</div></div>';m.classList.add('show')}
 function closeCatModal(){document.getElementById('catModal').classList.remove('show')}
@@ -1176,7 +1214,7 @@ function addCustomCategory(){
     btn.classList.add('sel');
   });
 }
-function saveNewCategory(){let n=document.getElementById('catName').value.trim(),e=(document.querySelector('#emoji-picker-grid .emoji.sel')||document.querySelector('.emoji.sel'))?.dataset.e||'📌';if(!n)return toast('Enter a category name');if(CATS.some(c=>c.n.toLowerCase()==n.toLowerCase()))return toast('Category already exists');CATS.push({n:n,e:e,c:'#6b7280',bg:'#f3f4f6'});saveCustomCategories();if(cType==='inc'){INC_CATS.push(n);saveIncCats();}else if(cType==='sav'){SAV_CATS.push(n);saveSavCats();}selCat=n;renderChips();closeCatModal();toast('Category added ✓')}
+function saveNewCategory(){let n=document.getElementById('catName').value.trim(),e=(document.querySelector('#emoji-picker-grid .emoji.sel')||document.querySelector('.emoji.sel'))?.dataset.e||'📌';if(!n)return toast('Enter a category name');if(CATS.some(c=>c.n.toLowerCase()==n.toLowerCase()))return toast('Category already exists');CATS.push({n:n,e:e,...colorForCategory(n)});saveCustomCategories();if(cType==='inc'){INC_CATS.push(n);saveIncCats();}else if(cType==='sav'){SAV_CATS.push(n);saveSavCats();}selCat=n;renderChips();closeCatModal();toast('Category added ✓')}
 function manageCustomCategories(){let a=CATS.filter(c=>!DEFAULT_CAT_NAMES.includes(c.n));if(!a.length)return toast('No custom categories yet');catModal('Manage categories','<div class="cat-list">'+a.map(c=>'<div class="cat-row"><span>'+c.e+' '+c.n+'</span><span><button class="mini" onclick="renameCategory(\''+c.n+'\')">Rename</button><button class="mini del" onclick="deleteCategory(\''+c.n+'\')">Delete</button></span></div>').join('')+'</div>','<button class="cat-btn alt" onclick="closeCatModal()">Done</button>')}
 function renameCategory(o){
   const cat=CATS.find(x=>x.n===o);
@@ -1609,25 +1647,65 @@ function renderCharts(){
   const colors=entries.map(([n])=>C(n).c);
   const total=data.reduce((s,v)=>s+v,0)||1;
   const isPie=document.getElementById('chartType').value==='pie';
+  const isDark=document.body.classList.contains('dark-mode');
+  const inkColor=isDark?'#f0ede8':'#1a1a1a';
+  const ink3Color=isDark?'#8a8880':'#7a7a7a';
+  const ringGap=isDark?'#0d0d0d':'#fafaf8';
   if(chartI)chartI.destroy();
-  chartI=new Chart(document.getElementById('mainChart'),{type:isPie?'pie':'bar',
-    data:{labels,datasets:[{data,backgroundColor:colors,borderColor:isPie?'#fff':colors,borderWidth:isPie?2:1,borderRadius:isPie?0:5,borderSkipped:false}]},
+  const centerTextPlugin={
+    id:'centerText',
+    afterDraw(chart){
+      if(chart.config.type!=='doughnut') return;
+      const {ctx,chartArea}=chart;
+      if(!chartArea) return;
+      const cx=(chartArea.left+chartArea.right)/2, cy=(chartArea.top+chartArea.bottom)/2;
+      ctx.save();
+      ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillStyle=ink3Color;ctx.font='600 11px inherit';
+      ctx.fillText('TOTAL SPENT',cx,cy-12);
+      ctx.fillStyle=inkColor;ctx.font='700 20px inherit';
+      ctx.fillText(fmt(total).replace('₹',''),cx,cy+10);
+      ctx.restore();
+    }
+  };
+  chartI=new Chart(document.getElementById('mainChart'),{type:isPie?'doughnut':'bar',
+    data:{labels,datasets:[{
+      data,backgroundColor:colors,
+      borderColor:isPie?ringGap:colors,
+      borderWidth:isPie?3:1,
+      borderRadius:isPie?8:5,
+      borderSkipped:false,
+      spacing:isPie?3:0,
+      hoverOffset:isPie?10:0,
+      hoverBorderColor:isPie?ringGap:colors
+    }]},
     options:{responsive:true,maintainAspectRatio:false,
+      cutout:isPie?'68%':undefined,
+      animation:{animateRotate:true,animateScale:true,duration:700,easing:'easeOutQuart'},
       plugins:{
-        legend:{display:isPie,position:'bottom',labels:{boxWidth:10,font:{size:11}}},
-        tooltip:{callbacks:{
-          label:ctx=>{
-            const pct=Math.round(ctx.raw/total*100);
-            return ' '+ctx.label+': '+fmt(ctx.raw)+' ('+pct+'%)';
-          }
+        legend:{display:isPie,position:'bottom',labels:{
+          usePointStyle:true,pointStyle:'circle',boxWidth:8,boxHeight:8,padding:14,
+          font:{size:11,weight:'500'},color:inkColor
         }},
+        tooltip:{
+          backgroundColor:isDark?'#1a1a1a':'#1a1a1a',
+          titleColor:'#fff',bodyColor:'#fff',
+          padding:10,cornerRadius:10,displayColors:true,boxPadding:4,
+          callbacks:{
+            label:ctx=>{
+              const pct=Math.round(ctx.raw/total*100);
+              return ' '+ctx.label+': '+fmt(ctx.raw)+' ('+pct+'%)';
+            }
+          }
+        },
         datalabels:false
       },
       scales:isPie?{}:{
-        x:{grid:{display:false},ticks:{font:{size:10},color:'#7a7a7a'}},
-        y:{beginAtZero:true,grid:{color:'rgba(0,0,0,.04)'},ticks:{callback:v=>'₹'+Math.round(v/1000)+'k',font:{size:10},color:'#7a7a7a'},border:{display:false}}
+        x:{grid:{display:false},ticks:{font:{size:10},color:ink3Color}},
+        y:{beginAtZero:true,grid:{color:isDark?'rgba(255,255,255,.06)':'rgba(0,0,0,.04)'},ticks:{callback:v=>'₹'+Math.round(v/1000)+'k',font:{size:10},color:ink3Color},border:{display:false}}
       }
-    }
+    },
+    plugins:isPie?[centerTextPlugin]:[]
   });
   const mx=Math.max(...data,1);
   window._drillEntries=entries;
@@ -2095,6 +2173,83 @@ function toast(msg){
   clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove('on'),2400);
 }
 
+function quickFilter(type){
+  // Highlight active chip
+  document.querySelectorAll('.filter-chip').forEach(b=>b.classList.remove('on'));
+  if(event&&event.target) event.target.classList.add('on');
+
+  if(type==='week'){
+    // Use a special week filter flag
+    window._weekFilter=true;
+    window._modeFilter=false;
+    document.getElementById('search-inp').value='';
+    renderAll();
+    return;
+  }
+  window._weekFilter=false;
+  if(type==='credit'||type==='income'||type==='savings'){
+    // Filter by the underlying transaction field, not renamed display text,
+    // so this keeps working even after a card is renamed.
+    window._modeFilter=type;
+    document.getElementById('search-inp').value='';
+    renderAll();
+    return;
+  }
+  window._modeFilter=false;
+  const inp=document.getElementById('search-inp');
+  if(!inp) return;
+  const map={today:td(),food:'food',shopping:'shopping',upi:'upi'};
+  inp.value=map[type]||type;
+  renderAll();
+}
+
+// ---- Customizable quick filter chips ----
+var QUICK_FILTER_DEFS=[
+  {id:'today',label:'Today',icon:''},
+  {id:'week',label:'This week',icon:''},
+  {id:'food',label:'Food',icon:'🍔'},
+  {id:'shopping',label:'Shopping',icon:'🛍️'},
+  {id:'upi',label:'UPI',icon:''},
+  {id:'credit',label:'Credit Card',icon:'💳'},
+  {id:'income',label:'Income',icon:'💰'},
+  {id:'savings',label:'Savings',icon:'🏦'},
+];
+var DEFAULT_QUICK_FILTERS=['today','week','food','shopping','upi','credit'];
+function getQuickFilters(){
+  try{const s=JSON.parse(localStorage.getItem('paisa_quick_filters'));if(Array.isArray(s)&&s.length)return s.filter(id=>QUICK_FILTER_DEFS.some(d=>d.id===id));}catch(e){}
+  return DEFAULT_QUICK_FILTERS.slice();
+}
+function saveQuickFilters(arr){localStorage.setItem('paisa_quick_filters',JSON.stringify(arr));}
+function renderQuickFilterChips(){
+  const wrap=document.getElementById('quick-filter-chips');
+  if(!wrap) return;
+  const active=getQuickFilters();
+  wrap.innerHTML=active.map(id=>{
+    const d=QUICK_FILTER_DEFS.find(x=>x.id===id);
+    if(!d) return '';
+    return `<button onclick="quickFilter('${id}')" class="filter-chip">${d.icon?d.icon+' ':''}${d.label}</button>`;
+  }).join('')+'<button onclick="openQuickFilterManager()" class="filter-chip" style="opacity:.75">⚙️ Edit</button>';
+}
+function openQuickFilterManager(){
+  const active=new Set(getQuickFilters());
+  const rows=QUICK_FILTER_DEFS.map(d=>`
+    <label style="display:flex;align-items:center;gap:10px;padding:10px 2px;border-bottom:1px solid var(--rule2);font-size:14px;color:var(--ink)">
+      <input type="checkbox" data-qf="${d.id}" ${active.has(d.id)?'checked':''} style="width:18px;height:18px;flex-shrink:0">
+      <span>${d.icon?d.icon+' ':''}${d.label}</span>
+    </label>`).join('');
+  catModal('Customize filters',
+    `<p style="font-size:13px;color:var(--ink3);margin-bottom:8px">Choose which quick filters show up below the search bar.</p>
+     <div id="qf-list">${rows}</div>`,
+    `<button class="cat-btn alt" onclick="closeCatModal()">Cancel</button><button class="cat-btn" onclick="saveQuickFilterManager()">Save</button>`);
+}
+function saveQuickFilterManager(){
+  const chosen=[...document.querySelectorAll('#qf-list input[data-qf]:checked')].map(i=>i.dataset.qf);
+  saveQuickFilters(chosen.length?chosen:DEFAULT_QUICK_FILTERS.slice());
+  renderQuickFilterChips();
+  closeCatModal();
+  toast('Filters updated ✓');
+}
+
 // Init
 initDarkMode();initInspireDaily();initEODNotification();renderHome();renderChips();loadCCNames();renderQuickFilterChips();
 backupAll();
@@ -2325,7 +2480,7 @@ function showEODSummary(){
   const bd=document.getElementById('eod-breakdown');
   if(bd){
     if(!todayTxns.length){
-      const nudgeMsgs=["Hey! Quick, log today's spends before you forget ✏️","Your money diary is empty today — add a few entries! ✨","Every rupee tells a story. What did you spend today? 💰","Don't let today slip away unrecorded 🎯","Your future self will thank you for logging today 🙏"];const nudge=nudgeMsgs[new Date().getDate()%nudgeMsgs.length];bd.innerHTML=`<div style="text-align:center;padding:24px 20px"><div style="font-size:40px;margin-bottom:12px">📝</div><div style="font-size:15px;font-weight:600;color:var(--ink);margin-bottom:8px">${nudge}</div><button onclick="document.getElementById('eod-modal').style.display='none';openSheet();" style="margin-top:8px;padding:12px 24px;background:var(--ink);color:#fff;border:none;border-radius:var(--r-lg);font-family:inherit;font-size:14px;font-weight:600;cursor:pointer">Add today's expenses →</button></div>`;
+      const nudgeMsgs=["Hey! Quick, log today's spends before you forget ✏️","Your money diary is empty today — add a few entries! ✨","Every rupee tells a story. What did you spend today? 💰","Don't let today slip away unrecorded 🎯","Your future self will thank you for logging today 🙏"];const nudge=nudgeMsgs[new Date().getDate()%nudgeMsgs.length];bd.innerHTML=`<div style="text-align:center;padding:24px 20px"><div style="font-size:40px;margin-bottom:12px">📝</div><div style="font-size:15px;font-weight:600;color:var(--ink);margin-bottom:8px">${nudge}</div><button class="solid-btn" onclick="document.getElementById('eod-modal').style.display='none';openSheet();" style="margin-top:8px;padding:12px 24px;border:none;border-radius:var(--r-lg);font-family:inherit;font-size:14px;font-weight:600;cursor:pointer">Add today's expenses →</button></div>`;
     } else {
       const entries=Object.entries(byCat).sort((a,b)=>b[1]-a[1]);
       bd.innerHTML=entries.map(([cat,amt],idx)=>{
@@ -2794,7 +2949,7 @@ function openInspireAll(){
         style="flex:1;padding:10px 14px;border:1.5px solid var(--rule);border-radius:var(--r-lg);background:var(--paper);color:var(--ink);font-family:inherit;font-size:13px;outline:none"
         onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--rule)'"
         onkeydown="if(event.key==='Enter')addInspireLineFromModal()" maxlength="400">
-      <button onclick="addInspireLineFromModal()" style="padding:10px 16px;background:var(--ink);color:#fff;border:none;border-radius:var(--r-lg);font-family:inherit;font-size:13px;font-weight:600;cursor:pointer">＋</button>
+      <button class="solid-btn" onclick="addInspireLineFromModal()" style="padding:10px 16px;border:none;border-radius:var(--r-lg);font-family:inherit;font-size:13px;font-weight:600;cursor:pointer">＋</button>
     </div>
     <!-- Lines list -->
     <div id="inspire-modal-list" style="flex:1;overflow-y:auto;padding:12px 20px;display:flex;flex-direction:column;gap:8px">
@@ -2952,91 +3107,16 @@ function switchSearchMode(mode){
   const isAI=mode==='ai';
   document.getElementById('srch-quick-panel').style.display=isAI?'none':'block';
   document.getElementById('srch-ai-panel').style.display=isAI?'block':'none';
-  document.getElementById('srch-tab-quick').style.background=isAI?'none':'var(--ink)';
-  document.getElementById('srch-tab-quick').style.color=isAI?'var(--ink3)':'#fff';
-  document.getElementById('srch-tab-ai').style.background=isAI?'var(--ink)':'none';
-  document.getElementById('srch-tab-ai').style.color=isAI?'#fff':'var(--ink3)';
+  const qBtn=document.getElementById('srch-tab-quick'),aBtn=document.getElementById('srch-tab-ai');
+  qBtn.classList.toggle('solid-btn',!isAI);
+  qBtn.style.background=isAI?'none':'';
+  qBtn.style.color=isAI?'var(--ink3)':'';
+  aBtn.classList.toggle('solid-btn',isAI);
+  aBtn.style.background=isAI?'':'none';
+  aBtn.style.color=isAI?'':'var(--ink3)';
   if(!isAI) document.getElementById('search-inp')?.focus();
   else document.getElementById('ai-search-inp')?.focus();
 }
-function quickFilter(type){
-  // Highlight active chip
-  document.querySelectorAll('.filter-chip').forEach(b=>b.classList.remove('on'));
-  if(event&&event.target) event.target.classList.add('on');
-
-  if(type==='week'){
-    // Use a special week filter flag
-    window._weekFilter=true;
-    window._modeFilter=false;
-    document.getElementById('search-inp').value='';
-    renderAll();
-    return;
-  }
-  window._weekFilter=false;
-  if(type==='credit'||type==='income'||type==='savings'){
-    // Filter by the underlying transaction field, not renamed display text,
-    // so this keeps working even after a card is renamed.
-    window._modeFilter=type;
-    document.getElementById('search-inp').value='';
-    renderAll();
-    return;
-  }
-  window._modeFilter=false;
-  const inp=document.getElementById('search-inp');
-  if(!inp) return;
-  const map={today:td(),food:'food',shopping:'shopping',upi:'upi'};
-  inp.value=map[type]||type;
-  renderAll();
-}
-
-// ---- Customizable quick filter chips ----
-const QUICK_FILTER_DEFS=[
-  {id:'today',label:'Today',icon:''},
-  {id:'week',label:'This week',icon:''},
-  {id:'food',label:'Food',icon:'🍔'},
-  {id:'shopping',label:'Shopping',icon:'🛍️'},
-  {id:'upi',label:'UPI',icon:''},
-  {id:'credit',label:'Credit Card',icon:'💳'},
-  {id:'income',label:'Income',icon:'💰'},
-  {id:'savings',label:'Savings',icon:'🏦'},
-];
-const DEFAULT_QUICK_FILTERS=['today','week','food','shopping','upi','credit'];
-function getQuickFilters(){
-  try{const s=JSON.parse(localStorage.getItem('paisa_quick_filters'));if(Array.isArray(s)&&s.length)return s.filter(id=>QUICK_FILTER_DEFS.some(d=>d.id===id));}catch(e){}
-  return DEFAULT_QUICK_FILTERS.slice();
-}
-function saveQuickFilters(arr){localStorage.setItem('paisa_quick_filters',JSON.stringify(arr));}
-function renderQuickFilterChips(){
-  const wrap=document.getElementById('quick-filter-chips');
-  if(!wrap) return;
-  const active=getQuickFilters();
-  wrap.innerHTML=active.map(id=>{
-    const d=QUICK_FILTER_DEFS.find(x=>x.id===id);
-    if(!d) return '';
-    return `<button onclick="quickFilter('${id}')" class="filter-chip">${d.icon?d.icon+' ':''}${d.label}</button>`;
-  }).join('')+'<button onclick="openQuickFilterManager()" class="filter-chip" style="opacity:.75">⚙️ Edit</button>';
-}
-function openQuickFilterManager(){
-  const active=new Set(getQuickFilters());
-  const rows=QUICK_FILTER_DEFS.map(d=>`
-    <label style="display:flex;align-items:center;gap:10px;padding:10px 2px;border-bottom:1px solid var(--rule2);font-size:14px;color:var(--ink)">
-      <input type="checkbox" data-qf="${d.id}" ${active.has(d.id)?'checked':''} style="width:18px;height:18px;flex-shrink:0">
-      <span>${d.icon?d.icon+' ':''}${d.label}</span>
-    </label>`).join('');
-  catModal('Customize filters',
-    `<p style="font-size:13px;color:var(--ink3);margin-bottom:8px">Choose which quick filters show up below the search bar.</p>
-     <div id="qf-list">${rows}</div>`,
-    `<button class="cat-btn alt" onclick="closeCatModal()">Cancel</button><button class="cat-btn" onclick="saveQuickFilterManager()">Save</button>`);
-}
-function saveQuickFilterManager(){
-  const chosen=[...document.querySelectorAll('#qf-list input[data-qf]:checked')].map(i=>i.dataset.qf);
-  saveQuickFilters(chosen.length?chosen:DEFAULT_QUICK_FILTERS.slice());
-  renderQuickFilterChips();
-  closeCatModal();
-  toast('Filters updated ✓');
-}
-
-
 // Dark Mode
 function toggleDarkMode(enabled){
   localStorage.setItem('paisa_dark_mode', enabled?'1':'0');
@@ -3052,6 +3132,7 @@ function applyDarkMode(enabled){
   document.documentElement.style.background=enabled?'#0d0d0d':'#fafaf8';
   const meta=document.querySelector('meta[name="theme-color"]');
   if(meta) meta.setAttribute('content', enabled?'#0d0d0d':'#fafaf8');
+  if(chartI&&document.getElementById('chartType')) renderCharts();
 }
 function initDarkMode(){
   const enabled=localStorage.getItem('paisa_dark_mode')==='1';
