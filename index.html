@@ -12,6 +12,7 @@
 <link rel="apple-touch-icon" href="/paisa-app/icon-192.png">
 <title>Paisa</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" defer></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,400&family=DM+Mono:wght@400;500&display=swap');
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;}
@@ -291,6 +292,8 @@ body.dark-mode{
   color-scheme:dark;
 }
 body.dark-mode{background:#0d0d0d;}
+body.dark-mode #app{background:#0d0d0d;}
+html:has(body.dark-mode){background:#0d0d0d;}
 
 /* Hero */
 body.dark-mode .hero-card{
@@ -528,7 +531,7 @@ body.dark-mode .si-result{background:#1c1700;border-color:#f0b429;}
 </style>
 <style>.cat-modal{display:none;position:fixed;inset:0;background:#0007;z-index:999;align-items:flex-end}.cat-modal.show{display:flex}.cat-card{background:#fff;width:100%;padding:24px;border-radius:24px 24px 0 0}.cat-input{width:100%;box-sizing:border-box;padding:13px;border:1px solid #ddd;border-radius:12px}.emoji-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:8px}.emoji,.mini{padding:9px;border:1px solid #ddd;border-radius:10px;background:#fff}.sel{border:2px solid #17221d}.cat-actions{display:flex;gap:10px;margin-top:20px}.cat-btn{flex:1;padding:12px;border:0;border-radius:12px;background:#17221d;color:#fff;font-weight:700}.alt{background:#f3f1eb;color:#17221d}.cat-row{display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid #eee}.del{color:#b42318}.delmain{background:#b42318;color:#fff}.delmain{background:#b42318;color:#fff}.home-mascot-top{position:absolute;right:18px;top:16px;font-size:38px;z-index:5;animation:lion 2.5s infinite}@keyframes lion{50%{transform:translateY(-5px)}}</style></head>
 <body>
-<script>try{if(localStorage.getItem("paisa_dark_mode")==="1")document.body.classList.add("dark-mode");}catch(e){}</script>
+<script>try{if(localStorage.getItem("paisa_dark_mode")==="1"){document.body.classList.add("dark-mode");document.documentElement.style.background="#0d0d0d";}}catch(e){}</script>
 
 <!-- PIN SETUP SCREEN -->
 <div id="pin-setup" class="pin-screen" style="display:none">
@@ -681,18 +684,11 @@ body.dark-mode .si-result{background:#1c1700;border-color:#f0b429;}
           <div style="display:flex;align-items:center;background:var(--surface);border:1.5px solid var(--rule);border-radius:var(--r-lg);padding:4px 4px 4px 14px;gap:8px;transition:border-color .15s" id="search-wrap"
             onfocusin="this.style.borderColor='var(--gold)'" onfocusout="this.style.borderColor='var(--rule)'">
             <svg style="width:16px;height:16px;flex-shrink:0;stroke:var(--ink3);fill:none;stroke-width:2;stroke-linecap:round" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            <input id="search-inp" type="text" placeholder="Amount, category, merchant, date…" style="flex:1;border:none;background:none;font-family:inherit;font-size:14px;color:var(--ink);outline:none;padding:8px 0;" oninput="renderAll()">
-            <button id="search-clear" onclick="document.getElementById('search-inp').value='';window._weekFilter=false;document.querySelectorAll('.filter-chip').forEach(b=>b.classList.remove('on'));renderAll()" style="display:none;width:32px;height:32px;border-radius:99px;background:var(--rule2);border:none;cursor:pointer;color:var(--ink3);font-size:16px;flex-shrink:0">×</button>
+            <input id="search-inp" type="text" placeholder="Amount, category, merchant, date…" style="flex:1;border:none;background:none;font-family:inherit;font-size:14px;color:var(--ink);outline:none;padding:8px 0;" oninput="window._modeFilter=false;window._weekFilter=false;renderAll()">
+            <button id="search-clear" onclick="document.getElementById('search-inp').value='';window._weekFilter=false;window._modeFilter=false;document.querySelectorAll('.filter-chip').forEach(b=>b.classList.remove('on'));renderAll()" style="display:none;width:32px;height:32px;border-radius:99px;background:var(--rule2);border:none;cursor:pointer;color:var(--ink3);font-size:16px;flex-shrink:0">×</button>
           </div>
           <!-- Quick filter chips -->
-          <div style="display:flex;gap:6px;margin-top:8px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none">
-            <button onclick="quickFilter('today')" class="filter-chip">Today</button>
-            <button onclick="quickFilter('week')" class="filter-chip">This week</button>
-            <button onclick="quickFilter('food')" class="filter-chip">🍔 Food</button>
-            <button onclick="quickFilter('shopping')" class="filter-chip">🛍️ Shopping</button>
-            <button onclick="quickFilter('upi')" class="filter-chip">UPI</button>
-            <button onclick="quickFilter('credit')" class="filter-chip">💳 Credit Card</button>
-          </div>
+          <div id="quick-filter-chips" style="display:flex;gap:6px;margin-top:8px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none"></div>
         </div>
         <!-- AI search -->
         <div id="srch-ai-panel" style="display:none">
@@ -710,7 +706,7 @@ body.dark-mode .si-result{background:#1c1700;border-color:#f0b429;}
       <div class="sec-head" style="padding-top:20px"><h2>Transactions</h2></div>
       <div class="filter-row">
         <label>Month</label>
-        <select id="mfilter" onchange="window._weekFilter=false;document.querySelectorAll('.filter-chip').forEach(b=>b.classList.remove('on'));renderAll()"><option value="">All time</option></select>
+        <select id="mfilter" onchange="window._weekFilter=false;window._modeFilter=false;document.querySelectorAll('.filter-chip').forEach(b=>b.classList.remove('on'));renderAll()"><option value="">All time</option></select>
       </div>
       <div style="height:14px"></div>
       <div id="all-feed" style="padding:0 20px;"></div>
@@ -876,6 +872,21 @@ body.dark-mode .si-result{background:#1c1700;border-color:#f0b429;}
         <div class="exp-row" onclick="doImport()">
           <div class="exp-ico" style="background:#fdf0ee">📥</div>
           <div class="exp-info"><div class="exp-name">Import JSON</div><div class="exp-desc">Restore from a backup file</div></div>
+          <span class="arr">›</span>
+        </div>
+      </div>
+
+      <!-- 10b. BULK IMPORT -->
+      <div class="sec-head"><h2>Bulk import transactions</h2></div>
+      <div class="exp-card">
+        <div class="exp-row" onclick="downloadBulkTemplate()">
+          <div class="exp-ico" style="background:#e8f5e9">📋</div>
+          <div class="exp-info"><div class="exp-name">Download template</div><div class="exp-desc">Excel/CSV format Paisa understands</div></div>
+          <span class="arr">›</span>
+        </div>
+        <div class="exp-row" onclick="doBulkImport()">
+          <div class="exp-ico" style="background:#edf2fc">📤</div>
+          <div class="exp-info"><div class="exp-name">Upload file (.xlsx / .csv)</div><div class="exp-desc">Adds transactions in bulk — doesn't erase existing data</div></div>
           <span class="arr">›</span>
         </div>
       </div>
@@ -1103,6 +1114,7 @@ body.dark-mode .si-result{background:#1c1700;border-color:#f0b429;}
 </div>
 <div id="toast"></div>
 <input type="file" id="imp" accept=".json" style="display:none" onchange="onImport(event)">
+<input type="file" id="bulkImp" accept=".csv,.xlsx,.xls" style="display:none" onchange="onBulkImportFile(event)">
 
 <script>
 
@@ -1205,6 +1217,42 @@ function saveCatRename(o){
 }
 function deleteCategory(n){catModal('Delete category','<p>Delete <b>'+n+'</b>?</p>','<button class="cat-btn alt" onclick="manageCustomCategories()">Cancel</button><button class="cat-btn delmain" onclick="confirmDelete(\''+n+'\')">Delete</button>')}
 function confirmDelete(n){let c=CATS.find(x=>x.n===n);CATS.splice(CATS.indexOf(c),1);saveCustomCategories();const ii=INC_CATS.indexOf(n);if(ii>-1){INC_CATS.splice(ii,1);saveIncCats();}const si=SAV_CATS.indexOf(n);if(si>-1){SAV_CATS.splice(si,1);saveSavCats();}renderChips();closeCatModal();toast('Category removed ✓')}
+// ---- Self-healing backup/recovery ----
+// Browsers (especially iOS Safari on installed PWAs, or low-storage devices)
+// can silently evict localStorage without any user action. To protect
+// against that "factory reset" symptom, we mirror every paisa_* key into a
+// single backup blob, and auto-restore from it if the primary data looks
+// like it vanished on its own.
+const BACKUP_KEY='paisa_backup_v1';
+function backupAll(){
+  try{
+    const snap={};
+    for(let i=0;i<localStorage.length;i++){
+      const k=localStorage.key(i);
+      if(k&&k.indexOf('paisa_')===0&&k!==BACKUP_KEY) snap[k]=localStorage.getItem(k);
+    }
+    snap.__ts=Date.now();
+    localStorage.setItem(BACKUP_KEY,JSON.stringify(snap));
+  }catch(e){/* storage full or unavailable — nothing more we can do here */}
+}
+function restoreFromBackupIfWiped(){
+  try{
+    const rawTxns=localStorage.getItem('paisa_txns');
+    const hasRealData=rawTxns&&rawTxns!=='[]'&&rawTxns!=='null';
+    if(hasRealData) return; // primary data present, nothing to do
+    const backupRaw=localStorage.getItem(BACKUP_KEY);
+    if(!backupRaw) return; // no backup exists yet (e.g. brand new install)
+    const snap=JSON.parse(backupRaw);
+    const backupTxns=snap.paisa_txns;
+    if(!backupTxns||backupTxns==='[]'||backupTxns==='null') return; // backup also empty
+    // Primary store looks wiped but we have a non-empty backup — restore it.
+    Object.keys(snap).forEach(k=>{if(k!=='__ts') localStorage.setItem(k,snap[k]);});
+    window._recoveredFromBackup=true;
+  }catch(e){/* ignore corrupt backup */}
+}
+restoreFromBackupIfWiped();
+try{ if(navigator.storage&&navigator.storage.persist) navigator.storage.persist(); }catch(e){}
+
 // v3 - all data persists in localStorage; never wiped on app update
 let txns=JSON.parse(localStorage.getItem('paisa_txns')||'[]');
 let budgets=JSON.parse(localStorage.getItem('paisa_bdg')||'{}');
@@ -1221,7 +1269,7 @@ const td=()=>new Date().toISOString().slice(0,10);
 const sameM=(d,r)=>{const a=new Date(d),b=r;return a.getMonth()===b.getMonth()&&a.getFullYear()===b.getFullYear();};
 const sameW=d=>{const diff=(new Date()-new Date(d))/864e5;return diff>=0&&diff<7;};
 const sameD=d=>d===td();
-const persist=()=>localStorage.setItem('paisa_txns',JSON.stringify(txns));
+const persist=()=>{localStorage.setItem('paisa_txns',JSON.stringify(txns));backupAll();};
 
 // Register service worker
 if('serviceWorker' in navigator){
@@ -1284,7 +1332,7 @@ function nav(id){
   document.getElementById('s-'+id).classList.add('active');
   document.getElementById('nb'+navIds.indexOf(id)).classList.add('on');
   if(id==='charts')renderCharts();
-  if(id==='all')renderAll();
+  if(id==='all'){renderQuickFilterChips();renderAll();}
   if(id==='more')renderMore();
 }
 
@@ -1507,6 +1555,13 @@ function renderAll(){
     const sow=new Date(now2); sow.setDate(now2.getDate()-daysBack); sow.setHours(0,0,0,0);
     data=data.filter(t=>new Date(t.date+'T12:00')>=sow);
   } else if(monthFilter) data=data.filter(t=>t.date.startsWith(monthFilter));
+  if(window._modeFilter==='credit'){
+    data=data.filter(t=>t.mode==='Credit Card 1'||t.mode==='Credit Card 2'||t.mode==='Credit Card');
+  } else if(window._modeFilter==='income'){
+    data=data.filter(t=>t.type==='inc');
+  } else if(window._modeFilter==='savings'){
+    data=data.filter(t=>t.type==='sav');
+  }
   if(q) data=data.filter(t=>
     (t.desc||'').toLowerCase().includes(q)||
     (t.cat||'').toLowerCase().includes(q)||
@@ -1851,6 +1906,118 @@ function xPDF(){
   
 `);w.document.close();w.print();toast('PDF opened');
 }
+function downloadBulkTemplate(){
+  const sample=[
+    'Date,Description,Category,Type,Amount,Mode',
+    '2026-07-01,Swiggy order,Food,Expense,450,UPI',
+    '2026-07-02,Salary,Salary,Income,50000,Bank Transfer',
+    '2026-07-03,Mutual fund SIP,Investments,Savings,5000,UPI'
+  ].join('\n');
+  dl('paisa-bulk-import-template.csv',sample,'text/csv');
+  toast('Template downloaded ✓');
+}
+function doBulkImport(){document.getElementById('bulkImp').click();}
+function parseCSVText(text){
+  const lines=text.split(/\r?\n/).filter(l=>l.trim().length);
+  return lines.map(line=>{
+    // simple CSV split that respects "quoted, commas"
+    const out=[];let cur='',inQ=false;
+    for(let i=0;i<line.length;i++){
+      const c=line[i];
+      if(c==='"'){inQ=!inQ;}
+      else if(c===','&&!inQ){out.push(cur);cur='';}
+      else cur+=c;
+    }
+    out.push(cur);
+    return out.map(s=>s.trim());
+  });
+}
+function normalizeBulkDate(v){
+  if(!v) return td();
+  v=String(v).trim();
+  if(/^\d{4}-\d{2}-\d{2}$/.test(v)) return v;
+  let m=v.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
+  if(m){
+    let [,d,mo,y]=m; if(y.length===2)y='20'+y;
+    return `${y}-${mo.padStart(2,'0')}-${d.padStart(2,'0')}`;
+  }
+  const d=new Date(v);
+  if(!isNaN(d)) return d.toISOString().slice(0,10);
+  return td();
+}
+function normalizeBulkType(v){
+  v=String(v||'').toLowerCase().trim();
+  if(v.startsWith('inc')) return 'inc';
+  if(v.startsWith('sav')||v.includes('invest')) return 'sav';
+  return 'exp';
+}
+function rowsToTxns(rows){
+  if(!rows.length) return [];
+  const header=rows[0].map(h=>String(h).toLowerCase().trim());
+  const idx=name=>header.findIndex(h=>h.includes(name));
+  const dI=idx('date'),descI=idx('desc'),catI=idx('categ'),typeI=idx('type'),amtI=idx('amount'),modeI=idx('mode');
+  const body=(dI>-1||amtI>-1)?rows.slice(1):rows; // skip header row if detected
+  const out=[];
+  body.forEach(r=>{
+    if(!r.some(c=>String(c).trim())) return; // skip blank rows
+    const amt=parseFloat(String(r[amtI>-1?amtI:4]||'').replace(/[^0-9.\-]/g,''));
+    if(!amt||isNaN(amt)) return;
+    out.push({
+      id:Date.now()+Math.random(),
+      date:normalizeBulkDate(r[dI>-1?dI:0]),
+      desc:(r[descI>-1?descI:1]||'').toString().trim()||'Imported transaction',
+      cat:(r[catI>-1?catI:2]||'Other').toString().trim()||'Other',
+      type:normalizeBulkType(r[typeI>-1?typeI:3]),
+      amt:Math.abs(amt),
+      mode:(r[modeI>-1?modeI:5]||'Other').toString().trim()||'Other'
+    });
+  });
+  return out;
+}
+function onBulkImportFile(e){
+  const file=e.target.files[0];if(!file)return;
+  const name=file.name.toLowerCase();
+  const finish=rows=>{
+    const newTxns=rowsToTxns(rows);
+    e.target.value='';
+    if(!newTxns.length){toast('No valid rows found in file');return;}
+    window._pendingBulkImport=newTxns;
+    catModal('Import transactions',
+      `<p>Found <b>${newTxns.length}</b> transaction${newTxns.length===1?'':'s'} in this file.</p>
+       <p style="font-size:12px;color:var(--ink3);margin-top:6px">This adds new transactions — it never deletes or overwrites your existing data.</p>`,
+      `<button class="cat-btn alt" onclick="closeCatModal()">Cancel</button><button class="cat-btn" onclick="confirmBulkImport()">Add ${newTxns.length} transactions</button>`);
+  };
+  if(name.endsWith('.csv')){
+    const r=new FileReader();
+    r.onload=ev=>finish(parseCSVText(ev.target.result));
+    r.onerror=()=>toast('Could not read file');
+    r.readAsText(file);
+  } else {
+    if(typeof XLSX==='undefined'){toast('Excel support still loading — try again in a moment, or use CSV');e.target.value='';return;}
+    const r=new FileReader();
+    r.onload=ev=>{
+      try{
+        const wb=XLSX.read(new Uint8Array(ev.target.result),{type:'array'});
+        const ws=wb.Sheets[wb.SheetNames[0]];
+        const rows=XLSX.utils.sheet_to_json(ws,{header:1,raw:false,defval:''});
+        finish(rows);
+      }catch(err){toast('Could not read Excel file');}
+      e.target.value='';
+    };
+    r.onerror=()=>toast('Could not read file');
+    r.readAsArrayBuffer(file);
+  }
+}
+function confirmBulkImport(){
+  const rows=window._pendingBulkImport||[];
+  if(!rows.length){closeCatModal();return;}
+  txns=[...txns,...rows];
+  persist();
+  closeCatModal();
+  renderHome();renderAll();renderCharts();
+  toast(`${rows.length} transactions added ✓`);
+  window._pendingBulkImport=null;
+}
 function doImport(){document.getElementById('imp').click();}
 function onImport(e){
   const file=e.target.files[0];if(!file)return;
@@ -1929,7 +2096,12 @@ function toast(msg){
 }
 
 // Init
-initDarkMode();initInspireDaily();initEODNotification();renderHome();renderChips();loadCCNames();
+initDarkMode();initInspireDaily();initEODNotification();renderHome();renderChips();loadCCNames();renderQuickFilterChips();
+backupAll();
+setInterval(backupAll,30000);
+document.addEventListener('visibilitychange',()=>{if(document.hidden)backupAll();});
+window.addEventListener('pagehide',backupAll);
+if(window._recoveredFromBackup){setTimeout(()=>toast('Recovered your data from backup ✓'),400);}
 
 
 
@@ -2795,16 +2967,73 @@ function quickFilter(type){
   if(type==='week'){
     // Use a special week filter flag
     window._weekFilter=true;
+    window._modeFilter=false;
     document.getElementById('search-inp').value='';
     renderAll();
     return;
   }
   window._weekFilter=false;
+  if(type==='credit'||type==='income'||type==='savings'){
+    // Filter by the underlying transaction field, not renamed display text,
+    // so this keeps working even after a card is renamed.
+    window._modeFilter=type;
+    document.getElementById('search-inp').value='';
+    renderAll();
+    return;
+  }
+  window._modeFilter=false;
   const inp=document.getElementById('search-inp');
   if(!inp) return;
-  const map={today:td(),food:'food',shopping:'shopping',upi:'upi',credit:'credit card'};
+  const map={today:td(),food:'food',shopping:'shopping',upi:'upi'};
   inp.value=map[type]||type;
   renderAll();
+}
+
+// ---- Customizable quick filter chips ----
+const QUICK_FILTER_DEFS=[
+  {id:'today',label:'Today',icon:''},
+  {id:'week',label:'This week',icon:''},
+  {id:'food',label:'Food',icon:'🍔'},
+  {id:'shopping',label:'Shopping',icon:'🛍️'},
+  {id:'upi',label:'UPI',icon:''},
+  {id:'credit',label:'Credit Card',icon:'💳'},
+  {id:'income',label:'Income',icon:'💰'},
+  {id:'savings',label:'Savings',icon:'🏦'},
+];
+const DEFAULT_QUICK_FILTERS=['today','week','food','shopping','upi','credit'];
+function getQuickFilters(){
+  try{const s=JSON.parse(localStorage.getItem('paisa_quick_filters'));if(Array.isArray(s)&&s.length)return s.filter(id=>QUICK_FILTER_DEFS.some(d=>d.id===id));}catch(e){}
+  return DEFAULT_QUICK_FILTERS.slice();
+}
+function saveQuickFilters(arr){localStorage.setItem('paisa_quick_filters',JSON.stringify(arr));}
+function renderQuickFilterChips(){
+  const wrap=document.getElementById('quick-filter-chips');
+  if(!wrap) return;
+  const active=getQuickFilters();
+  wrap.innerHTML=active.map(id=>{
+    const d=QUICK_FILTER_DEFS.find(x=>x.id===id);
+    if(!d) return '';
+    return `<button onclick="quickFilter('${id}')" class="filter-chip">${d.icon?d.icon+' ':''}${d.label}</button>`;
+  }).join('')+'<button onclick="openQuickFilterManager()" class="filter-chip" style="opacity:.75">⚙️ Edit</button>';
+}
+function openQuickFilterManager(){
+  const active=new Set(getQuickFilters());
+  const rows=QUICK_FILTER_DEFS.map(d=>`
+    <label style="display:flex;align-items:center;gap:10px;padding:10px 2px;border-bottom:1px solid var(--rule2);font-size:14px;color:var(--ink)">
+      <input type="checkbox" data-qf="${d.id}" ${active.has(d.id)?'checked':''} style="width:18px;height:18px;flex-shrink:0">
+      <span>${d.icon?d.icon+' ':''}${d.label}</span>
+    </label>`).join('');
+  catModal('Customize filters',
+    `<p style="font-size:13px;color:var(--ink3);margin-bottom:8px">Choose which quick filters show up below the search bar.</p>
+     <div id="qf-list">${rows}</div>`,
+    `<button class="cat-btn alt" onclick="closeCatModal()">Cancel</button><button class="cat-btn" onclick="saveQuickFilterManager()">Save</button>`);
+}
+function saveQuickFilterManager(){
+  const chosen=[...document.querySelectorAll('#qf-list input[data-qf]:checked')].map(i=>i.dataset.qf);
+  saveQuickFilters(chosen.length?chosen:DEFAULT_QUICK_FILTERS.slice());
+  renderQuickFilterChips();
+  closeCatModal();
+  toast('Filters updated ✓');
 }
 
 
@@ -2820,6 +3049,9 @@ function toggleDarkMode(enabled){
 }
 function applyDarkMode(enabled){
   document.body.classList.toggle('dark-mode', enabled);
+  document.documentElement.style.background=enabled?'#0d0d0d':'#fafaf8';
+  const meta=document.querySelector('meta[name="theme-color"]');
+  if(meta) meta.setAttribute('content', enabled?'#0d0d0d':'#fafaf8');
 }
 function initDarkMode(){
   const enabled=localStorage.getItem('paisa_dark_mode')==='1';
