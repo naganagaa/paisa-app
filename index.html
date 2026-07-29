@@ -248,6 +248,25 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:#fafaf8;color:var(--i
 .si-spinner{display:none;text-align:center;padding:20px;font-size:13px;color:var(--ink3);}
 .si-err{color:var(--red);font-size:13px;margin-top:8px;display:none;}
 .api-key-hint{font-size:11px;color:var(--ink3);margin-top:6px;line-height:1.5;}
+
+/* Tally */
+.tally-btn{display:flex;align-items:center;gap:12px;width:100%;padding:16px;background:linear-gradient(135deg,#1a1a2e,#16213e);color:#fff;border:none;border-radius:16px;cursor:pointer;font-family:inherit;text-align:left;}
+.tally-btn .tb-ico{font-size:28px;}
+.tally-btn .tb-amt{font-family:'DM Mono',monospace;font-size:20px;font-weight:500;}
+#tally-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:500;align-items:flex-end;justify-content:center;}
+#tally-modal.show{display:flex;}
+.tally-card{background:var(--surface);border-radius:24px 24px 0 0;width:100%;max-width:430px;padding:20px 20px 28px;max-height:88vh;overflow-y:auto;}
+.tally-remind{display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--gold-pale);border:1.5px solid var(--gold);border-radius:var(--r-lg);font-size:12px;color:var(--gold-d);margin-bottom:14px;line-height:1.5;}
+.tally-contact-row{display:flex;align-items:center;gap:12px;padding:13px 14px;background:var(--surface);border:1px solid var(--rule);border-radius:var(--r-lg);margin-bottom:8px;cursor:pointer;}
+.tally-avatar{width:38px;height:38px;border-radius:50%;background:var(--gold-pale);color:var(--gold-d);display:flex;align-items:center;justify-content:center;font-weight:600;font-size:14px;flex-shrink:0;}
+.tally-txn-row{display:flex;align-items:center;gap:10px;padding:10px 4px;border-bottom:1px solid var(--rule2);}
+.tally-txn-row:last-child{border-bottom:none;}
+.tally-batch-bar{display:flex;align-items:center;justify-content:space-between;background:var(--gold-pale);border-radius:var(--r-lg);padding:12px 14px;margin:12px 0;}
+.tally-receipt{background:var(--paper);border:1px dashed var(--rule);border-radius:var(--r-lg);padding:12px 14px;margin-top:6px;font-size:12px;}
+.tally-cadence{font-size:11px;color:var(--ink3);}
+body.dark-mode .tally-contact-row{background:#212226;border-color:#2b2c31;}
+body.dark-mode .tally-remind{background:rgba(200,169,110,.12);}
+body.dark-mode .tally-receipt{background:#1c1d21;border-color:#333;}
 /* Category drill-down panel */
 #cat-drill{position:fixed;inset:0;background:var(--paper);z-index:200;transform:translateX(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);overflow-y:auto;padding-bottom:40px;}
 #cat-drill.open{transform:translateX(0);}
@@ -738,6 +757,18 @@ body.dark-mode .si-result{background:#1c1700;border-color:var(--gold);}
         </button>
       </div>
 
+      <!-- 1a. TALLY -->
+      <div style="padding:10px 20px 0">
+        <button class="tally-btn" onclick="openTally()">
+          <div class="tb-ico">🔁</div>
+          <div style="flex:1">
+            <div style="font-size:14px;font-weight:600">Tally</div>
+            <div style="font-size:12px;color:rgba(255,255,255,.55);margin-top:2px" id="tally-summary-sub">No pending reimbursements</div>
+          </div>
+          <div class="tb-amt" id="tally-summary-amt">₹0</div>
+        </button>
+      </div>
+
       <!-- 1b. UI THEME (consolidated: dark mode + accent color, room for more) -->
       <div style="padding:10px 20px 0">
         <button onclick="openUIThemeModal()" style="width:100%;display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--surface);border:1px solid var(--rule);border-radius:var(--r-lg);cursor:pointer;font-family:inherit;text-align:left">
@@ -1022,6 +1053,10 @@ body.dark-mode .si-result{background:#1c1700;border-color:var(--gold);}
   </div>
 </div>
 
+<div id="tally-modal">
+  <div class="tally-card" id="tally-card-inner"></div>
+</div>
+
 <!-- CATEGORY DRILL-DOWN PANEL -->
 <div id="cat-drill">
   <div class="drill-head">
@@ -1069,6 +1104,22 @@ body.dark-mode .si-result{background:#1c1700;border-color:var(--gold);}
         <option>UPI</option><option>Cash</option><option value='Credit Card 1'>Credit Card 1</option><option value='Credit Card 2'>Credit Card 2</option>
         <option>Debit Card</option><option>NEFT</option><option>Other</option>
       </select>
+    </div>
+  </div>
+  <div class="fld" id="reimb-fld">
+    <div class="toggle-row" style="padding:10px 12px;background:var(--gold-pale);border-radius:var(--r-lg);border:1px solid var(--gold)">
+      <div>
+        <div class="toggle-label" style="font-size:13px">🔁 Reimbursable</div>
+        <div class="toggle-sub">Lent to someone — excluded from spend totals till settled</div>
+      </div>
+      <label class="tog">
+        <input type="checkbox" id="reimb-toggle" onchange="toggleReimbFld(this.checked)">
+        <span class="tog-slider"></span>
+      </label>
+    </div>
+    <div id="reimb-contact-wrap" style="display:none;margin-top:8px">
+      <label>Who owes you</label>
+      <select id="reimb-contact"></select>
     </div>
   </div>
   <button class="smart-import-btn" onclick="openSI()">
@@ -1322,6 +1373,206 @@ try{ if(navigator.storage&&navigator.storage.persist) navigator.storage.persist(
 
 // v3 - all data persists in localStorage; never wiped on app update
 let txns=JSON.parse(localStorage.getItem('paisa_txns')||'[]');
+let contacts=JSON.parse(localStorage.getItem('paisa_contacts')||'[]');
+let settlements=JSON.parse(localStorage.getItem('paisa_settlements')||'[]');
+const saveContacts=()=>localStorage.setItem('paisa_contacts',JSON.stringify(contacts));
+const saveSettlements=()=>localStorage.setItem('paisa_settlements',JSON.stringify(settlements));
+const isPendingReimb=t=>!!(t.reimb&&t.reimb.status==='pending');
+const CADENCE_DAYS={weekly:7,biweekly:14,monthly:30,manual:99999};
+
+// ===== Tally =====
+let tallyView='list';       // 'list' | 'detail'
+let tallyContactId=null;
+let tallySelected=new Set();
+
+function contactPending(cid){return txns.filter(t=>t.reimb&&t.reimb.contact===cid&&t.reimb.status==='pending');}
+function contactPendingTotal(cid){return contactPending(cid).reduce((s,t)=>s+t.amt,0);}
+function totalReceivables(){return txns.filter(isPendingReimb).reduce((s,t)=>s+t.amt,0);}
+
+function updateTallySummary(){
+  const el=document.getElementById('tally-summary-amt'), sub=document.getElementById('tally-summary-sub');
+  if(!el)return;
+  const total=totalReceivables();
+  el.textContent=fmt(total);
+  const dueContacts=contacts.filter(c=>tallyDue(c));
+  sub.textContent=total<=0?'No pending reimbursements':(dueContacts.length?dueContacts.length+' tab'+(dueContacts.length>1?'s':'')+' ready to settle':contacts.filter(c=>contactPendingTotal(c.id)>0).length+' pending tab(s)');
+}
+function tallyDue(c){
+  const pend=contactPending(c.id);
+  if(!pend.length)return false;
+  if(!c.cadence||c.cadence==='manual')return false;
+  const last=c.lastSettled?new Date(c.lastSettled+'T00:00'):new Date(Math.min(...pend.map(t=>new Date(t.date+'T00:00').getTime())));
+  const days=(Date.now()-last.getTime())/864e5;
+  return days>=CADENCE_DAYS[c.cadence];
+}
+
+function openTally(){tallyView='list';document.getElementById('tally-modal').classList.add('show');renderTally();}
+function closeTally(){document.getElementById('tally-modal').classList.remove('show');}
+
+function renderTally(){
+  if(tallyView==='list')renderTallyList();else renderContactTab();
+  updateTallySummary();
+}
+
+function renderTallyList(){
+  const total=totalReceivables();
+  const dueContacts=contacts.filter(c=>tallyDue(c));
+  const rows=contacts.map(c=>{
+    const pend=contactPendingTotal(c.id);
+    const initials=c.name.trim().slice(0,1).toUpperCase()||'?';
+    return `<div class="tally-contact-row" onclick="openContactTab('${c.id}')">
+      <div class="tally-avatar">${initials}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:500;font-size:14px">${c.name}</div>
+        <div class="tally-cadence">${c.cadence&&c.cadence!=='manual'?'Auto-settles '+c.cadence:'Manual settlement'}${tallyDue(c)?' · ready to settle':''}</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-family:'DM Mono',monospace;font-weight:500;color:${pend>0?'var(--gold-d)':'var(--ink3)'}">${fmt(pend)}</div>
+        <div style="font-size:11px;color:var(--ink3)">${pend>0?'pending':'settled up'}</div>
+      </div>
+    </div>`;
+  }).join('');
+  document.getElementById('tally-card-inner').innerHTML=`
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+      <div>
+        <div style="font-size:18px;font-weight:600">🔁 Tally</div>
+        <div style="font-size:12px;color:var(--ink3);margin-top:2px">Money owed to you</div>
+      </div>
+      <button onclick="closeTally()" style="width:30px;height:30px;border-radius:50%;border:1px solid var(--rule);background:var(--rule2);cursor:pointer;font-size:18px;color:var(--ink3);">×</button>
+    </div>
+    <div style="font-family:'DM Mono',monospace;font-size:34px;font-weight:400;margin:10px 0 2px">${fmt(total)}</div>
+    <div style="font-size:12px;color:var(--ink3);margin-bottom:14px">Total receivables</div>
+    ${dueContacts.length?`<div class="tally-remind">⏰ ${dueContacts.map(c=>c.name).join(', ')} ${dueContacts.length>1?'are':'is'} due for settlement — tap in to settle the batch.</div>`:''}
+    ${rows||'<div class="empty" style="padding:20px 0"><div class="ei">🤝</div><p>No contacts yet</p><small>Add someone you regularly pay for</small></div>'}
+    <button class="save-btn" style="margin:14px 0 0" onclick="openAddContact()">＋ Add contact</button>
+  `;
+}
+
+function openAddContact(){
+  catModal('Add contact',
+    `<div class="fld" style="margin:0 0 12px"><label>Name</label><input type="text" id="newContactName" placeholder="e.g. Sister" style="width:100%;padding:11px 14px;border:1px solid var(--rule);border-radius:var(--r);background:var(--paper);color:var(--ink);font-family:inherit;font-size:14px;outline:none;"></div>
+     <div class="fld" style="margin:0"><label>Settlement cadence</label><select id="newContactCadence" style="width:100%;padding:11px 14px;border:1px solid var(--rule);border-radius:var(--r);background:var(--paper);color:var(--ink);font-family:inherit;font-size:14px;">
+       <option value="weekly">Weekly</option><option value="biweekly">Every 2 weeks</option><option value="monthly">Monthly</option><option value="manual" selected>Manual only</option>
+     </select></div>`,
+    `<button class="cat-btn alt" onclick="closeCatModal();renderTally()">Cancel</button><button class="cat-btn" onclick="saveNewContact()">Add</button>`
+  );
+}
+function saveNewContact(){
+  const name=document.getElementById('newContactName').value.trim();
+  if(!name)return toast('Enter a name');
+  const cadence=document.getElementById('newContactCadence').value;
+  contacts.push({id:'c'+Date.now(),name,cadence,lastSettled:null});
+  saveContacts();closeCatModal();renderTally();toast('Contact added ✓');
+}
+function deleteContactPrompt(cid){
+  const c=contacts.find(x=>x.id===cid);if(!c)return;
+  showConfirm('🗑️','Remove '+c.name+'?','Pending transactions will stay logged but unlinked from this contact.',()=>{
+    txns=txns.filter(t=>!(t.reimb&&t.reimb.contact===cid))
+      .concat(txns.filter(t=>t.reimb&&t.reimb.contact===cid).map(t=>({...t,reimb:null})));
+    contacts=contacts.filter(x=>x.id!==cid);
+    saveContacts();persist();tallyView='list';renderTally();renderHome();renderAll();toast('Contact removed');
+  });
+}
+
+function openContactTab(cid){
+  tallyView='detail';tallyContactId=cid;
+  tallySelected=new Set(contactPending(cid).map(t=>t.id));
+  renderContactTab();
+}
+function backToTallyList(){tallyView='list';renderTallyList();}
+
+function renderContactTab(){
+  const c=contacts.find(x=>x.id===tallyContactId);if(!c)return backToTallyList();
+  const pend=contactPending(tallyContactId).sort((a,b)=>a.date<b.date?1:-1);
+  const selTotal=pend.filter(t=>tallySelected.has(t.id)).reduce((s,t)=>s+t.amt,0);
+  const allOn=pend.length>0&&pend.every(t=>tallySelected.has(t.id));
+  const rows=pend.map(t=>{
+    const d=new Date(t.date+'T12:00').toLocaleDateString('en-IN',{day:'numeric',month:'short'});
+    return `<div class="tally-txn-row">
+      <input type="checkbox" ${tallySelected.has(t.id)?'checked':''} onchange="toggleTxnSel(${t.id})" style="width:17px;height:17px;flex-shrink:0">
+      <div style="flex:1;min-width:0"><div style="font-size:13px">${t.desc}</div><div style="font-size:11px;color:var(--ink3)">${t.cat} · ${d}</div></div>
+      <div style="font-family:'DM Mono',monospace;font-size:13px">${fmt(t.amt)}</div>
+    </div>`;
+  }).join('')||'<div class="empty" style="padding:16px 0"><p>Nothing pending 🎉</p></div>';
+
+  const pastSettlements=settlements.filter(s=>s.contact===tallyContactId).sort((a,b)=>b.date<a.date?-1:1);
+  const receiptHtml=pastSettlements.slice(0,5).map(s=>`
+    <div class="tally-receipt">
+      <div style="display:flex;justify-content:space-between;font-weight:500;margin-bottom:4px"><span>Settled ${s.date}</span><span>${fmt(s.total)}</span></div>
+      <div style="color:var(--ink3);font-size:11px;margin-bottom:6px">${s.items.length} item${s.items.length>1?'s':''} · ${s.mode}</div>
+      <button class="mini" onclick="shareReceipt('${s.id}')">Share receipt</button>
+    </div>`).join('');
+
+  document.getElementById('tally-card-inner').innerHTML=`
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
+      <button onclick="backToTallyList()" style="width:30px;height:30px;border-radius:50%;border:1px solid var(--rule);background:var(--rule2);cursor:pointer;font-size:16px;color:var(--ink3);">‹</button>
+      <div style="flex:1">
+        <div style="font-size:16px;font-weight:600">${c.name}</div>
+        <div class="tally-cadence">${c.cadence&&c.cadence!=='manual'?'Auto-settles '+c.cadence:'Manual settlement'}</div>
+      </div>
+      <button class="mini del" onclick="deleteContactPrompt('${c.id}')">Remove</button>
+    </div>
+    <div class="fld" style="margin:10px 0 2px"><label>Settlement cadence</label>
+      <select onchange="setContactCadence('${c.id}',this.value)" style="width:100%;padding:9px 12px;border:1px solid var(--rule);border-radius:var(--r);background:var(--paper);color:var(--ink);font-family:inherit;font-size:13px;">
+        <option value="weekly" ${c.cadence==='weekly'?'selected':''}>Weekly</option>
+        <option value="biweekly" ${c.cadence==='biweekly'?'selected':''}>Every 2 weeks</option>
+        <option value="monthly" ${c.cadence==='monthly'?'selected':''}>Monthly</option>
+        <option value="manual" ${(!c.cadence||c.cadence==='manual')?'selected':''}>Manual only</option>
+      </select>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 4px 4px;font-size:12px;color:var(--ink3)">
+      <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" ${allOn?'checked':''} onchange="toggleSelAll(this.checked)" style="width:15px;height:15px">Select all pending</label>
+      <span>${pend.length} item${pend.length!==1?'s':''}</span>
+    </div>
+    <div style="max-height:220px;overflow-y:auto;border-top:1px solid var(--rule2)">${rows}</div>
+    <div class="tally-batch-bar">
+      <div><div style="font-size:11px;color:var(--gold-d);text-transform:uppercase;letter-spacing:.04em">Selected total</div><div style="font-family:'DM Mono',monospace;font-size:20px;font-weight:500;color:var(--gold-d)">${fmt(selTotal)}</div></div>
+      <button class="save-btn" style="margin:0;width:auto;padding:12px 18px;font-size:13px" ${selTotal<=0?'disabled':''} onclick="settleSelectedBatch()">✓ Settle batch</button>
+    </div>
+    ${receiptHtml?`<div class="sec-head" style="padding:14px 0 6px"><h2>Past settlements</h2></div>${receiptHtml}`:''}
+  `;
+}
+function toggleTxnSel(id){tallySelected.has(id)?tallySelected.delete(id):tallySelected.add(id);renderContactTab();}
+function toggleSelAll(on){
+  const pend=contactPending(tallyContactId);
+  tallySelected=new Set(on?pend.map(t=>t.id):[]);
+  renderContactTab();
+}
+function setContactCadence(cid,val){const c=contacts.find(x=>x.id===cid);if(c){c.cadence=val;saveContacts();}}
+
+function settleSelectedBatch(){
+  const c=contacts.find(x=>x.id===tallyContactId);if(!c)return;
+  const items=txns.filter(t=>tallySelected.has(t.id));
+  if(!items.length)return;
+  const total=items.reduce((s,t)=>s+t.amt,0);
+  const settlement={id:'s'+Date.now(),contact:c.id,date:td(),mode:'Cash/UPI',
+    items:items.map(t=>({id:t.id,desc:t.desc,cat:t.cat,date:t.date,amt:t.amt})),total};
+  settlements.unshift(settlement);
+  saveSettlements();
+  txns=txns.map(t=>tallySelected.has(t.id)?{...t,reimb:{...t.reimb,status:'settled',settlementId:settlement.id}}:t);
+  c.lastSettled=td();saveContacts();
+  persist();renderHome();renderCharts();renderAll();
+  tallySelected=new Set();
+  renderContactTab();
+  toast('Settled ✓ ₹'+Math.round(total).toLocaleString('en-IN'));
+  shareReceipt(settlement.id);
+}
+
+function buildReceiptText(s){
+  const c=contacts.find(x=>x.id===s.contact);
+  const lines=s.items.map(it=>{
+    const d=new Date(it.date+'T12:00').toLocaleDateString('en-IN',{day:'numeric',month:'short'});
+    return `${d}  ${it.desc} (${it.cat})  ₹${Math.round(it.amt).toLocaleString('en-IN')}`;
+  }).join('\n');
+  return `🧾 Settlement summary\nFor: ${c?c.name:'—'}\nDate: ${s.date}\n\n${lines}\n\nTotal: ₹${Math.round(s.total).toLocaleString('en-IN')}\n\n— via Paisa`;
+}
+async function shareReceipt(sid){
+  const s=settlements.find(x=>x.id===sid);if(!s)return;
+  const text=buildReceiptText(s);
+  if(navigator.share){try{await navigator.share({text});return;}catch(e){}}
+  window.open('https://wa.me/?text='+encodeURIComponent(text),'_blank');
+}
+const cadenceDays=c=>c==='weekly'?7:c==='biweekly'?14:30;
 let budgets=JSON.parse(localStorage.getItem('paisa_bdg')||'{}');
 let cardLimit=parseFloat(localStorage.getItem('paisa_cc_limit')||'0');
 let cardPayments=JSON.parse(localStorage.getItem('paisa_cc_payments')||'[]');
@@ -1459,6 +1710,8 @@ function nav(id){
 // Sheet
 function openSheet(id){
   editId=id||null;
+  const rc=document.getElementById('reimb-contact');
+  rc.innerHTML=contacts.map(c=>`<option value="${c.id}">${c.name}</option>`).join('')||'<option value="">No contacts yet — add one from More ▸ Tally</option>';
   if(editId){
     const t=txns.find(x=>x.id===editId);
     document.getElementById('sh-title').textContent='Edit transaction';
@@ -1467,6 +1720,9 @@ function openSheet(id){
     document.getElementById('desc').value=t.desc;
     document.getElementById('date').value=t.date;
     document.getElementById('mode').value=t.mode;
+    document.getElementById('reimb-toggle').checked=!!t.reimb;
+    toggleReimbFld(!!t.reimb);
+    if(t.reimb)rc.value=t.reimb.contact;
   } else {
     document.getElementById('sh-title').textContent='Add transaction';
     setType('exp');selCat='Food';selSavCat='FD';
@@ -1474,6 +1730,8 @@ function openSheet(id){
     document.getElementById('desc').value='';
     document.getElementById('date').value=td();
     document.getElementById('mode').value='UPI';
+    document.getElementById('reimb-toggle').checked=false;
+    toggleReimbFld(false);
   }
   renderChips();
   document.getElementById('sheet').classList.add('on');
@@ -1505,14 +1763,22 @@ function renderChips(){
 }
 function pickCat(n){selCat=n;renderChips();}
 
+function toggleReimbFld(on){
+  document.getElementById('reimb-contact-wrap').style.display=on?'block':'none';
+}
 function saveTxn(){
   const a=parseFloat(document.getElementById('amt').value);
   if(!a||a<=0){toast('Enter an amount');return;}
+  const reimbOn=document.getElementById('reimb-toggle').checked&&cType==='exp';
+  const reimbContact=document.getElementById('reimb-contact').value;
+  if(reimbOn&&!reimbContact){toast('Pick who owes you, or add a contact first');return;}
+  const prev=editId?txns.find(x=>x.id===editId):null;
   const t={
     id:editId||Date.now(),type:cType,amt:a,cat:selCat,
     desc:document.getElementById('desc').value.trim()||selCat,
     date:document.getElementById('date').value||td(),
     mode:document.getElementById('mode').value,
+    reimb:reimbOn?{contact:reimbContact,status:(prev&&prev.reimb)?prev.reimb.status:'pending'}:null,
   };
   if(editId)txns=txns.map(x=>x.id===editId?t:x);
   else txns.unshift(t);
@@ -1570,12 +1836,12 @@ function renderHome(){
   const insp=localStorage.getItem('paisa_inspire_msg')||'';
   const inspEl=document.getElementById('inspire-msg');
   if(inspEl){inspEl.textContent=insp;inspEl.style.display=insp?'block':'none';}
-  const mExp=txns.filter(t=>t.type==='exp'&&sameM(t.date,now));
+  const mExp=txns.filter(t=>t.type==='exp'&&sameM(t.date,now)&&!isPendingReimb(t));
   const mSav=txns.filter(t=>t.type==='sav'&&sameM(t.date,now));
   const mInc=txns.filter(t=>t.type==='inc'&&sameM(t.date,now));
   const spent=mExp.filter(t=>t.mode!=='Credit Card 1'&&t.mode!=='Credit Card 2'&&t.mode!=='Credit Card').reduce((s,t)=>s+t.amt,0);
   const income=mInc.reduce((s,t)=>s+t.amt,0);
-  const ccExpenses=txns.filter(t=>t.type==='exp'&&(t.mode==='Credit Card 1'||t.mode==='Credit Card')&&sameM(t.date,now)).reduce((sum,t)=>sum+t.amt,0);
+  const ccExpenses=txns.filter(t=>t.type==='exp'&&(t.mode==='Credit Card 1'||t.mode==='Credit Card')&&sameM(t.date,now)&&!isPendingReimb(t)).reduce((sum,t)=>sum+t.amt,0);
   const ccPaid=cardPayments.filter(p=>sameM(p.date,now)).reduce((sum,p)=>sum+p.amt,0);
   const ccOutstanding=Math.max(0,ccExpenses-ccPaid);
   document.getElementById('cc-limit').textContent=fmt(cardLimit);
@@ -1604,6 +1870,7 @@ function renderHome(){
   else cutoff.setDate(1);
   const personal=txns.filter(t=>{
     if(t.type!=='exp') return false;
+    if(isPendingReimb(t)) return false;
     const td=new Date(t.date+'T12:00');
     const inRange=range==='month'?sameM(t.date,now):td>=cutoff;
     if(!inRange) return false;
@@ -1621,8 +1888,8 @@ function renderHome(){
 
   document.getElementById('h-total').textContent=Math.round(spent).toLocaleString('en-IN');
   document.getElementById('h-month').textContent=now.toLocaleString('en-IN',{month:'long',year:'numeric'});
-  document.getElementById('k-today').textContent=fmt(txns.filter(t=>t.type==='exp'&&t.mode!=='Credit Card 1'&&t.mode!=='Credit Card 2'&&t.mode!=='Credit Card'&&sameD(t.date)).reduce((s,t)=>s+t.amt,0));
-  document.getElementById('k-week').textContent=fmt(txns.filter(t=>t.type==='exp'&&t.mode!=='Credit Card 1'&&t.mode!=='Credit Card 2'&&t.mode!=='Credit Card'&&sameW(t.date)).reduce((s,t)=>s+t.amt,0));
+  document.getElementById('k-today').textContent=fmt(txns.filter(t=>t.type==='exp'&&t.mode!=='Credit Card 1'&&t.mode!=='Credit Card 2'&&t.mode!=='Credit Card'&&!isPendingReimb(t)&&sameD(t.date)).reduce((s,t)=>s+t.amt,0));
+  document.getElementById('k-week').textContent=fmt(txns.filter(t=>t.type==='exp'&&t.mode!=='Credit Card 1'&&t.mode!=='Credit Card 2'&&t.mode!=='Credit Card'&&!isPendingReimb(t)&&sameW(t.date)).reduce((s,t)=>s+t.amt,0));
   document.getElementById('k-inc').textContent=fmt(income);
   document.getElementById('k-sav') && (document.getElementById('k-sav').textContent=fmt(mSav.reduce((s,t)=>s+t.amt,0)));
   // Streak
@@ -1646,11 +1913,16 @@ function renderHome(){
   cc2Ids.forEach(id=>{const el=document.getElementById(id);if(el)el.style.display=cc2Enabled?(id==='cc2-kpi-grid'?'grid':id==='cc2-payment-feed'?'flex':'block'):'none';});
   updateCCModeOptions();
 }
+function reimbBadge(t){
+  if(!t.reimb)return'';
+  const cname=(contacts.find(c=>c.id===t.reimb.contact)||{}).name||'contact';
+  return t.reimb.status==='pending'?` · 🔁 ${cname} pending`:` · 🔁 ${cname} settled`;
+}
 function rowHTML(t){
   const c=C(t.cat),d=new Date(t.date+'T12:00').toLocaleDateString('en-IN',{day:'numeric',month:'short'});
   return`<div class="tr" onclick="openSheet(${t.id})">
     <div class="ti" style="background:${softBg(c.bg)}">${c.e}</div>
-    <div class="tb"><div class="tn">${t.desc}</div><div class="tm">${t.cat} · ${t.mode==='Credit Card 1'?ccName(1):t.mode==='Credit Card 2'?ccName(2):t.mode} · ${d}</div></div>
+    <div class="tb"><div class="tn">${t.desc}</div><div class="tm">${t.cat} · ${t.mode==='Credit Card 1'?ccName(1):t.mode==='Credit Card 2'?ccName(2):t.mode} · ${d}${reimbBadge(t)}</div></div>
     <div class="ta${t.type==='inc'?' inc':t.type==='sav'?' sav':''}">${t.type==='inc'?'+':t.type==='sav'?'🏦':'−'}${fmt(t.amt)}</div>
   </div>`;
 }
@@ -1701,13 +1973,13 @@ function renderAll(){
   data.forEach(t=>{if(!groups[t.date])groups[t.date]=[];groups[t.date].push(t);});
   feed.innerHTML=Object.keys(groups).sort().reverse().map(date=>{
     const dl=new Date(date+'T12:00').toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'});
-    const dtotal=groups[date].filter(t=>t.type==='exp').reduce((s,t)=>s+t.amt,0);
+    const dtotal=groups[date].filter(t=>t.type==='exp'&&!isPendingReimb(t)).reduce((s,t)=>s+t.amt,0);
     return`<div class="date-group">
       <div class="date-group-head"><span>${dl}</span><span>${fmt(dtotal)}</span></div>
       <div style="display:flex;flex-direction:column;gap:3px;">${groups[date].map(t=>`
         <div class="tr" style="padding-right:6px">
           <div class="ti" style="background:${softBg(C(t.cat).bg)}" onclick="openSheet(${t.id})">${C(t.cat).e}</div>
-          <div class="tb" onclick="openSheet(${t.id})"><div class="tn">${t.desc}</div><div class="tm">${t.cat} · ${t.mode==='Credit Card 1'?ccName(1):t.mode==='Credit Card 2'?ccName(2):t.mode}</div></div>
+          <div class="tb" onclick="openSheet(${t.id})"><div class="tn">${t.desc}</div><div class="tm">${t.cat} · ${t.mode==='Credit Card 1'?ccName(1):t.mode==='Credit Card 2'?ccName(2):t.mode}${reimbBadge(t)}</div></div>
           <div class="ta${t.type==='inc'?' inc':t.type==='sav'?' sav':''}" onclick="openSheet(${t.id})">${t.type==='inc'?'+':t.type==='sav'?'🏦':'−'}${fmt(t.amt)}</div>
           <button class="del-btn" onclick="del(${t.id})">×</button>
         </div>`).join('')}</div></div>`;
@@ -1718,7 +1990,7 @@ function renderAll(){
 function cTab(el,v){cTabVal=v;document.querySelectorAll('.ctab').forEach(b=>b.classList.remove('on'));el.classList.add('on');renderCharts();}
 function renderCharts(){
   const now=new Date();
-  let filtered=txns.filter(t=>t.type==='exp');
+  let filtered=txns.filter(t=>t.type==='exp'&&!isPendingReimb(t));
   if(cTabVal==='month') filtered=filtered.filter(t=>sameM(t.date,now));
   else if(cTabVal==='week'){
     const sow=new Date();sow.setDate(now.getDate()-((now.getDay()+6)%7));sow.setHours(0,0,0,0);
@@ -1866,6 +2138,7 @@ function isCC2Enabled(){return localStorage.getItem('paisa_cc2_enabled')==='1';}
 
 // More
 function renderMore(){
+  updateTallySummary();
   const now=new Date(),mT=txns.filter(t=>sameM(t.date,now));
   const totE=mT.filter(t=>t.type==='exp').reduce((s,t)=>s+t.amt,0);
   const totI=txns.filter(t=>t.type==='inc').reduce((s,t)=>s+t.amt,0);
