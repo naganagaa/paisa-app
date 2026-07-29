@@ -868,8 +868,8 @@ body.dark-mode .si-result{background:#1c1700;border-color:var(--gold);}
 
       <!-- 6b. AUTO BACKUP -->
       <div class="sec-head"><h2>Auto Backup</h2></div>
-      <div style="padding:0 20px 12px;display:flex;flex-direction:column;gap:10px">
-        <div class="toggle-row">
+      <div class="exp-card" style="padding:2px 0">
+        <div class="toggle-row" style="border:none;border-radius:0;border-bottom:1px solid var(--rule2);margin:0">
           <div>
             <div class="toggle-label">💾 Automatic Backups</div>
             <div class="toggle-sub" id="autobackup-sub">Save a backup file automatically at your chosen frequency</div>
@@ -879,18 +879,36 @@ body.dark-mode .si-result{background:#1c1700;border-color:var(--gold);}
             <span class="tog-slider"></span>
           </label>
         </div>
-        <div id="autobackup-options" style="display:none;flex-direction:column;gap:8px">
-          <select id="autobackup-freq" onchange="saveAutoBackupFreq()" style="width:100%;padding:11px 14px;border:1px solid var(--rule);border-radius:var(--r);background:var(--paper);color:var(--ink);font-family:inherit;font-size:14px">
-            <option value="daily">Daily</option>
-            <option value="weekly">Weekly</option>
-            <option value="monthly" selected>Monthly</option>
-            <option value="quarterly">Quarterly</option>
-            <option value="annually">Annually</option>
-          </select>
+        <div id="autobackup-options" style="display:none;flex-direction:column;padding:14px 18px 16px;gap:10px">
+          <div>
+            <label style="font-size:11px;color:var(--ink3);letter-spacing:.07em;text-transform:uppercase;display:block;margin-bottom:6px">Frequency</label>
+            <select id="autobackup-freq" onchange="saveAutoBackupFreq()" style="width:100%;padding:11px 14px;border:1px solid var(--rule);border-radius:var(--r);background:var(--paper);color:var(--ink);font-family:inherit;font-size:14px">
+              <option value="daily">Daily</option>
+              <option value="weekly">Weekly</option>
+              <option value="monthly" selected>Monthly</option>
+              <option value="quarterly">Quarterly</option>
+              <option value="annually">Annually</option>
+            </select>
+          </div>
+
+          <div id="autobackup-folder-card" style="display:none;align-items:center;gap:12px;padding:12px 14px;background:var(--gold-pale);border:1px solid var(--gold);border-radius:var(--r-lg)">
+            <div style="font-size:20px">📁</div>
+            <div style="flex:1;min-width:0">
+              <div id="autobackup-folder-name" style="font-size:13px;font-weight:600;color:var(--gold-d)">No folder chosen</div>
+              <div id="autobackup-folder-sub" style="font-size:11px;color:var(--gold-d);opacity:.85;margin-top:1px">Backups will download to your device instead</div>
+            </div>
+          </div>
+
           <button class="save-btn" id="autobackup-folder-btn" onclick="chooseAutoBackupFolder()" style="width:100%;margin:0;background:var(--surface);color:var(--ink);border:1px solid var(--rule);display:none">📁 Choose backup folder</button>
-          <div id="autobackup-status" style="font-size:11px;color:var(--ink3);line-height:1.5"></div>
+
+          <div id="autobackup-permlost" class="tally-remind" style="display:none;margin:0">⚠️ Folder access needs to be re-confirmed. Tap below to reconnect.</div>
+
+          <button class="save-btn" style="width:100%;margin:0" onclick="performAutoBackup(true)">⬇️ Backup now</button>
+
+          <div id="autobackup-status" style="font-size:11px;color:var(--ink3);line-height:1.5;padding-top:2px"></div>
         </div>
       </div>
+
 
       <!-- 7. SMART IMPORT -->
       <div class="sec-head"><h2>Smart Import</h2></div>
@@ -1566,12 +1584,93 @@ function buildReceiptText(s){
   }).join('\n');
   return `🧾 Settlement summary\nFor: ${c?c.name:'—'}\nDate: ${s.date}\n\n${lines}\n\nTotal: ₹${Math.round(s.total).toLocaleString('en-IN')}\n\n— via Paisa`;
 }
-async function shareReceipt(sid){
-  const s=settlements.find(x=>x.id===sid);if(!s)return;
-  const text=buildReceiptText(s);
-  if(navigator.share){try{await navigator.share({text});return;}catch(e){}}
-  window.open('https://wa.me/?text='+encodeURIComponent(text),'_blank');
+
+function drawReceiptCanvas(s){
+  const c=contacts.find(x=>x.id===s.contact);
+  const W=420, PAD=28, ROWH=34;
+  const rows=s.items.length;
+  const H=PAD*2+250+rows*ROWH+90;
+  const cvs=document.createElement('canvas');
+  const scale=2; // crisp on retina
+  cvs.width=W*scale; cvs.height=H*scale;
+  cvs.style.width=W+'px'; cvs.style.height=H+'px';
+  const x=cvs.getContext('2d'); x.scale(scale,scale);
+
+  // paper background
+  x.fillStyle='#fdfbf6'; x.fillRect(0,0,W,H);
+  // subtle border
+  x.strokeStyle='#e7e1d4'; x.lineWidth=1; x.strokeRect(0.5,0.5,W-1,H-1);
+
+  const dash=(y)=>{x.save();x.setLineDash([4,4]);x.strokeStyle='#d8d0bd';x.beginPath();x.moveTo(PAD,y);x.lineTo(W-PAD,y);x.stroke();x.restore();};
+  const center=(t,y,size,weight,color)=>{x.fillStyle=color||'#1a1a1a';x.font=`${weight||500} ${size}px 'DM Sans',sans-serif`;x.textAlign='center';x.fillText(t,W/2,y);};
+  const left=(t,y,size,weight,color)=>{x.fillStyle=color||'#1a1a1a';x.font=`${weight||400} ${size}px 'DM Sans',sans-serif`;x.textAlign='left';x.fillText(t,PAD,y);};
+  const right=(t,y,size,weight,color)=>{x.fillStyle=color||'#1a1a1a';x.font=`${weight||500} ${size}px 'DM Mono',monospace`;x.textAlign='right';x.fillText(t,W-PAD,y);};
+
+  let y=PAD+16;
+  center('🔁 PAISA',y,15,700,'#a9772f'); y+=8;
+  center('SETTLEMENT RECEIPT',y+16,11,600,'#8a8880'); y+=44;
+
+  dash(y); y+=28;
+  left('Settled with',y,11,500,'#8a8880');
+  right(c?c.name:'—',y,15,700); y+=22;
+  left('Date',y,11,500,'#8a8880');
+  right(new Date(s.date+'T12:00').toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}),y,13,500); y+=22;
+  left('Items',y,11,500,'#8a8880');
+  right(String(s.items.length),y,13,500); y+=18;
+
+  dash(y); y+=26;
+  left('DESCRIPTION',y,10,700,'#8a8880');
+  right('AMOUNT',y,10,700,'#8a8880'); y+=14;
+  dash(y); y+=24;
+
+  s.items.forEach(it=>{
+    const d=new Date(it.date+'T12:00').toLocaleDateString('en-IN',{day:'numeric',month:'short'});
+    left(it.desc.length>26?it.desc.slice(0,25)+'…':it.desc, y, 13, 500);
+    right('₹'+Math.round(it.amt).toLocaleString('en-IN'), y, 13, 500);
+    y+=15;
+    left(`${it.cat} · ${d}`, y, 10.5, 400, '#a19c90');
+    y+=ROWH-15;
+  });
+
+  dash(y); y+=30;
+  center('TOTAL DUE', y, 11, 600, '#8a8880'); y+=30;
+  center('₹'+Math.round(s.total).toLocaleString('en-IN'), y, 26, 700, '#a9772f'); y+=34;
+
+  dash(y); y+=24;
+  center('Generated by Paisa · Thank you! 🙏', y, 10.5, 400, '#8a8880');
+
+  return cvs;
 }
+
+function openReceiptPreview(sid){
+  const s=settlements.find(x=>x.id===sid);if(!s)return;
+  const cvs=drawReceiptCanvas(s);
+  const dataUrl=cvs.toDataURL('image/png');
+  catModal('Settlement receipt',
+    `<div style="display:flex;justify-content:center;margin-bottom:14px"><img src="${dataUrl}" style="max-width:100%;border-radius:10px;box-shadow:var(--sh)"></div>`,
+    `<button class="cat-btn alt" onclick="closeCatModal()">Close</button><button class="cat-btn" onclick="shareReceiptImage('${s.id}')">Share</button>`
+  );
+}
+
+async function shareReceiptImage(sid){
+  const s=settlements.find(x=>x.id===sid);if(!s)return;
+  const cvs=drawReceiptCanvas(s);
+  const c=contacts.find(x=>x.id===s.contact);
+  const fname=`paisa-receipt-${c?c.name.replace(/\s+/g,'-').toLowerCase():'settlement'}-${s.date}.png`;
+  cvs.toBlob(async(blob)=>{
+    if(!blob)return;
+    const file=new File([blob],fname,{type:'image/png'});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){
+      try{await navigator.share({files:[file],title:'Settlement receipt',text:'Settlement receipt from Paisa'});return;}catch(e){/* cancelled or failed, fall through */}
+    }
+    // fallback: download the image
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=fname;a.click();
+    toast('Receipt image saved — share it from your gallery');
+  },'image/png');
+}
+
+// kept for anywhere a plain-text summary is still useful (e.g. clipboard)
+async function shareReceipt(sid){openReceiptPreview(sid);}
 const cadenceDays=c=>c==='weekly'?7:c==='biweekly'?14:30;
 let budgets=JSON.parse(localStorage.getItem('paisa_bdg')||'{}');
 let cardLimit=parseFloat(localStorage.getItem('paisa_cc_limit')||'0');
@@ -2263,8 +2362,9 @@ function saveBudgets(){
 
 // Export
 function dl(name,content,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([content],{type}));a.download=name;a.click();}
+function tsFname(){const d=new Date();const p=n=>String(n).padStart(2,'0');return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`;}
 function xCSV(){
-  dl('paisa-export.csv',['Date,Description,Category,Type,Amount,Mode',...txns.map(t=>`${t.date},"${t.desc}",${t.cat},${t.type==='exp'?'Expense':'Income'},${t.amt},${t.mode==='Credit Card 1'?ccName(1):t.mode==='Credit Card 2'?ccName(2):t.mode}`)].join('\n'),'text/csv');
+  dl('paisa-export-'+tsFname()+'.csv',['Date,Description,Category,Type,Amount,Mode',...txns.map(t=>`${t.date},"${t.desc}",${t.cat},${t.type==='exp'?'Expense':'Income'},${t.amt},${t.mode==='Credit Card 1'?ccName(1):t.mode==='Credit Card 2'?ccName(2):t.mode}`)].join('\n'),'text/csv');
   toast('CSV downloaded');
 }
 function xExcel(){
@@ -2275,7 +2375,7 @@ function xExcel(){
   const html='<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="UTF-8"><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>Paisa</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--></head><body>'+tbl+'</body></html>';
   const blob=new Blob([html],{type:'application/vnd.ms-excel;charset=utf-8'});
   const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');a.href=url;a.download='paisa-transactions.xls';a.click();
+  const a=document.createElement('a');a.href=url;a.download='paisa-transactions-'+tsFname()+'.xls';a.click();
   setTimeout(()=>URL.revokeObjectURL(url),1000);
   toast('Excel file downloaded ✓');
 }
@@ -2314,7 +2414,7 @@ function buildBackupPayload(){
   };
 }
 function xJSON(){
-  dl('paisa-backup.json',JSON.stringify(buildBackupPayload(),null,2),'application/json');
+  dl('paisa-backup-'+tsFname()+'.json',JSON.stringify(buildBackupPayload(),null,2),'application/json');
   toast('Full backup downloaded ✓');
 }
 function xPDF(){
@@ -2692,20 +2792,46 @@ function nextBackupDue(){
 async function updateAutoBackupStatus(){
   const el=document.getElementById('autobackup-status');
   const folderBtn=document.getElementById('autobackup-folder-btn');
+  const folderCard=document.getElementById('autobackup-folder-card');
+  const folderName=document.getElementById('autobackup-folder-name');
+  const folderSub=document.getElementById('autobackup-folder-sub');
+  const permLost=document.getElementById('autobackup-permlost');
   if(!el) return;
-  if(folderBtn) folderBtn.style.display=fsAccessSupported()?'block':'none';
+  const supported=fsAccessSupported();
+  if(folderBtn) folderBtn.style.display=supported?'block':'none';
   const enabled=localStorage.getItem('paisa_autobackup_enabled')==='1';
-  if(!enabled){el.textContent='';return;}
-  let folderTxt='Backups will download to your device automatically.';
-  if(fsAccessSupported()){
-    try{
-      const h=await idbGet('backupDir');
-      folderTxt=h?('Saving into: '+(h.name||'chosen folder')):'No folder chosen yet — tap "Choose backup folder", or backups will download instead.';
-    }catch(e){}
+  if(!enabled){el.textContent='';if(folderCard)folderCard.style.display='none';if(permLost)permLost.style.display='none';return;}
+  let dueTxt='Next backup: '+new Date(nextBackupDue()).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});
+  if(!supported){
+    el.textContent='Your browser can\'t save straight to a folder, so backups will download to your device automatically. '+dueTxt;
+    if(folderCard)folderCard.style.display='none';
+    if(permLost)permLost.style.display='none';
+    return;
   }
-  const due=nextBackupDue();
-  const dueTxt='Next backup: '+new Date(due).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});
-  el.textContent=folderTxt+' '+dueTxt;
+  try{
+    const h=await idbGet('backupDir');
+    if(h){
+      folderCard.style.display='flex';
+      folderBtn.textContent='📁 Change backup folder';
+      const perm=await h.queryPermission({mode:'readwrite'});
+      if(perm==='granted'){
+        folderName.textContent='Saving to: '+(h.name||'chosen folder');
+        folderSub.textContent='Backups are written straight into this folder';
+        permLost.style.display='none';
+      }else{
+        folderName.textContent=h.name||'Chosen folder';
+        folderSub.textContent='Access needs to be reconfirmed';
+        permLost.style.display='flex';
+      }
+    }else{
+      folderCard.style.display='flex';
+      folderName.textContent='No folder chosen';
+      folderSub.textContent='Backups will download to your device instead';
+      folderBtn.textContent='📁 Choose backup folder';
+      permLost.style.display='none';
+    }
+  }catch(e){}
+  el.textContent=dueTxt;
 }
 function toggleAutoBackup(enabled){
   localStorage.setItem('paisa_autobackup_enabled',enabled?'1':'0');
@@ -2720,28 +2846,36 @@ function saveAutoBackupFreq(){
   localStorage.setItem('paisa_autobackup_freq',document.getElementById('autobackup-freq').value);
   updateAutoBackupStatus();
 }
-async function performAutoBackup(){
+async function performAutoBackup(manual){
   const payload=JSON.stringify(buildBackupPayload(),null,2);
-  const fname='paisa-backup-'+td()+'.json';
-  let wroteToFolder=false;
+  const fname='paisa-backup-'+tsFname()+'.json';
+  let wroteToFolder=false, permissionIssue=false;
   if(fsAccessSupported()){
     try{
       const dirHandle=await idbGet('backupDir');
       if(dirHandle){
-        const perm=await dirHandle.queryPermission({mode:'readwrite'});
-        const granted=perm==='granted'?true:(await dirHandle.requestPermission({mode:'readwrite'}))==='granted';
-        if(granted){
+        let perm=await dirHandle.queryPermission({mode:'readwrite'});
+        // requestPermission() only works inside a user gesture (e.g. the "Backup now" tap
+        // or right after choosing the folder) — calling it from a background timer silently
+        // fails, which is why scheduled backups used to fall back to a download instead of
+        // writing into the chosen folder.
+        if(perm!=='granted'&&manual){
+          perm=await dirHandle.requestPermission({mode:'readwrite'});
+        }
+        if(perm==='granted'){
           const fileHandle=await dirHandle.getFileHandle(fname,{create:true});
           const writable=await fileHandle.createWritable();
           await writable.write(payload);await writable.close();
           wroteToFolder=true;
+        }else{
+          permissionIssue=true;
         }
       }
-    }catch(e){/* fall through to download */}
+    }catch(e){permissionIssue=true;}
   }
   if(!wroteToFolder) dl(fname,payload,'application/json');
   localStorage.setItem('paisa_autobackup_last',String(Date.now()));
-  toast(wroteToFolder?'Auto backup saved to your folder ✓':'Auto backup downloaded ✓');
+  toast(wroteToFolder?'Backup saved to your folder ✓':(permissionIssue?'Folder access needed — reconnect it below (downloaded instead) ✓':'Backup downloaded ✓'));
   updateAutoBackupStatus();
 }
 function checkAutoBackup(){
