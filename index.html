@@ -891,6 +891,11 @@ body.dark-mode .si-result{background:#1c1700;border-color:var(--gold);}
             </select>
           </div>
 
+          <div>
+            <label style="font-size:11px;color:var(--ink3);letter-spacing:.07em;text-transform:uppercase;display:block;margin-bottom:6px">Backup time</label>
+            <input type="time" id="autobackup-time" onchange="saveAutoBackupTime()" style="width:100%;padding:11px 14px;border:1px solid var(--rule);border-radius:var(--r);background:var(--paper);color:var(--ink);font-family:inherit;font-size:14px">
+          </div>
+
           <div id="autobackup-folder-card" style="display:none;align-items:center;gap:12px;padding:12px 14px;background:var(--gold-pale);border:1px solid var(--gold);border-radius:var(--r-lg)">
             <div style="font-size:20px">📁</div>
             <div style="flex:1;min-width:0">
@@ -901,7 +906,7 @@ body.dark-mode .si-result{background:#1c1700;border-color:var(--gold);}
 
           <button class="save-btn" id="autobackup-folder-btn" onclick="chooseAutoBackupFolder()" style="width:100%;margin:0;background:var(--surface);color:var(--ink);border:1px solid var(--rule);display:none">📁 Choose backup folder</button>
 
-          <div id="autobackup-permlost" class="tally-remind" style="display:none;margin:0">⚠️ Folder access needs to be re-confirmed. Tap below to reconnect.</div>
+          <button id="autobackup-permlost" class="tally-remind" style="display:none;margin:0;width:100%;border:none;cursor:pointer;font-family:inherit;text-align:left" onclick="reconnectAutoBackupFolder()">⚠️ Folder access needs to be re-confirmed (normal after restarting the app) — tap to reconnect</button>
 
           <button class="save-btn" style="width:100%;margin:0" onclick="performAutoBackup(true)">⬇️ Backup now</button>
 
@@ -1396,6 +1401,7 @@ let settlements=JSON.parse(localStorage.getItem('paisa_settlements')||'[]');
 const saveContacts=()=>localStorage.setItem('paisa_contacts',JSON.stringify(contacts));
 const saveSettlements=()=>localStorage.setItem('paisa_settlements',JSON.stringify(settlements));
 const isPendingReimb=t=>!!(t.reimb&&t.reimb.status==='pending');
+const isReimb=t=>!!t.reimb; // true whether pending OR settled — money you were reimbursed for is never your own spend
 const CADENCE_DAYS={weekly:7,biweekly:14,monthly:30,manual:99999};
 
 // ===== Tally =====
@@ -1935,12 +1941,12 @@ function renderHome(){
   const insp=localStorage.getItem('paisa_inspire_msg')||'';
   const inspEl=document.getElementById('inspire-msg');
   if(inspEl){inspEl.textContent=insp;inspEl.style.display=insp?'block':'none';}
-  const mExp=txns.filter(t=>t.type==='exp'&&sameM(t.date,now)&&!isPendingReimb(t));
+  const mExp=txns.filter(t=>t.type==='exp'&&sameM(t.date,now)&&!isReimb(t));
   const mSav=txns.filter(t=>t.type==='sav'&&sameM(t.date,now));
   const mInc=txns.filter(t=>t.type==='inc'&&sameM(t.date,now));
   const spent=mExp.filter(t=>t.mode!=='Credit Card 1'&&t.mode!=='Credit Card 2'&&t.mode!=='Credit Card').reduce((s,t)=>s+t.amt,0);
   const income=mInc.reduce((s,t)=>s+t.amt,0);
-  const ccExpenses=txns.filter(t=>t.type==='exp'&&(t.mode==='Credit Card 1'||t.mode==='Credit Card')&&sameM(t.date,now)&&!isPendingReimb(t)).reduce((sum,t)=>sum+t.amt,0);
+  const ccExpenses=txns.filter(t=>t.type==='exp'&&(t.mode==='Credit Card 1'||t.mode==='Credit Card')&&sameM(t.date,now)&&!isReimb(t)).reduce((sum,t)=>sum+t.amt,0);
   const ccPaid=cardPayments.filter(p=>sameM(p.date,now)).reduce((sum,p)=>sum+p.amt,0);
   const ccOutstanding=Math.max(0,ccExpenses-ccPaid);
   document.getElementById('cc-limit').textContent=fmt(cardLimit);
@@ -1969,7 +1975,7 @@ function renderHome(){
   else cutoff.setDate(1);
   const personal=txns.filter(t=>{
     if(t.type!=='exp') return false;
-    if(isPendingReimb(t)) return false;
+    if(isReimb(t)) return false;
     const td=new Date(t.date+'T12:00');
     const inRange=range==='month'?sameM(t.date,now):td>=cutoff;
     if(!inRange) return false;
@@ -1987,8 +1993,8 @@ function renderHome(){
 
   document.getElementById('h-total').textContent=Math.round(spent).toLocaleString('en-IN');
   document.getElementById('h-month').textContent=now.toLocaleString('en-IN',{month:'long',year:'numeric'});
-  document.getElementById('k-today').textContent=fmt(txns.filter(t=>t.type==='exp'&&t.mode!=='Credit Card 1'&&t.mode!=='Credit Card 2'&&t.mode!=='Credit Card'&&!isPendingReimb(t)&&sameD(t.date)).reduce((s,t)=>s+t.amt,0));
-  document.getElementById('k-week').textContent=fmt(txns.filter(t=>t.type==='exp'&&t.mode!=='Credit Card 1'&&t.mode!=='Credit Card 2'&&t.mode!=='Credit Card'&&!isPendingReimb(t)&&sameW(t.date)).reduce((s,t)=>s+t.amt,0));
+  document.getElementById('k-today').textContent=fmt(txns.filter(t=>t.type==='exp'&&t.mode!=='Credit Card 1'&&t.mode!=='Credit Card 2'&&t.mode!=='Credit Card'&&!isReimb(t)&&sameD(t.date)).reduce((s,t)=>s+t.amt,0));
+  document.getElementById('k-week').textContent=fmt(txns.filter(t=>t.type==='exp'&&t.mode!=='Credit Card 1'&&t.mode!=='Credit Card 2'&&t.mode!=='Credit Card'&&!isReimb(t)&&sameW(t.date)).reduce((s,t)=>s+t.amt,0));
   document.getElementById('k-inc').textContent=fmt(income);
   document.getElementById('k-sav') && (document.getElementById('k-sav').textContent=fmt(mSav.reduce((s,t)=>s+t.amt,0)));
   // Streak
@@ -2072,7 +2078,7 @@ function renderAll(){
   data.forEach(t=>{if(!groups[t.date])groups[t.date]=[];groups[t.date].push(t);});
   feed.innerHTML=Object.keys(groups).sort().reverse().map(date=>{
     const dl=new Date(date+'T12:00').toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'});
-    const dtotal=groups[date].filter(t=>t.type==='exp'&&!isPendingReimb(t)).reduce((s,t)=>s+t.amt,0);
+    const dtotal=groups[date].filter(t=>t.type==='exp'&&!isReimb(t)).reduce((s,t)=>s+t.amt,0);
     return`<div class="date-group">
       <div class="date-group-head"><span>${dl}</span><span>${fmt(dtotal)}</span></div>
       <div style="display:flex;flex-direction:column;gap:3px;">${groups[date].map(t=>`
@@ -2089,7 +2095,7 @@ function renderAll(){
 function cTab(el,v){cTabVal=v;document.querySelectorAll('.ctab').forEach(b=>b.classList.remove('on'));el.classList.add('on');renderCharts();}
 function renderCharts(){
   const now=new Date();
-  let filtered=txns.filter(t=>t.type==='exp'&&!isPendingReimb(t));
+  let filtered=txns.filter(t=>t.type==='exp'&&!isReimb(t));
   if(cTabVal==='month') filtered=filtered.filter(t=>sameM(t.date,now));
   else if(cTabVal==='week'){
     const sow=new Date();sow.setDate(now.getDate()-((now.getDay()+6)%7));sow.setHours(0,0,0,0);
@@ -2414,8 +2420,10 @@ function buildBackupPayload(){
   };
 }
 function xJSON(){
-  dl('paisa-backup-'+tsFname()+'.json',JSON.stringify(buildBackupPayload(),null,2),'application/json');
-  toast('Full backup downloaded ✓');
+  showConfirm('🧾','Download full backup?','This saves a JSON file with all your transactions, budgets, categories and settings to your device.',()=>{
+    dl('paisa-backup-'+tsFname()+'.json',JSON.stringify(buildBackupPayload(),null,2),'application/json');
+    toast('Full backup downloaded ✓');
+  });
 }
 function xPDF(){
   const now=new Date(),mn=now.toLocaleString('en-IN',{month:'long',year:'numeric'});
@@ -2774,6 +2782,16 @@ async function idbGet(key){
   });
 }
 function fsAccessSupported(){return typeof window.showDirectoryPicker==='function';}
+async function reconnectAutoBackupFolder(){
+  try{
+    const h=await idbGet('backupDir');
+    if(!h){toast('No folder saved yet — choose one first');return;}
+    const perm=await h.requestPermission({mode:'readwrite'});
+    if(perm==='granted'){toast('Folder access confirmed ✓');}
+    else{toast('Access not granted — try "Change backup folder" instead');}
+  }catch(e){toast('Couldn\'t reconnect — try "Change backup folder" instead');}
+  updateAutoBackupStatus();
+}
 async function chooseAutoBackupFolder(){
   if(!fsAccessSupported()){toast('Folder picking isn\'t supported in this browser — backups will download instead');return;}
   try{
@@ -2785,9 +2803,17 @@ async function chooseAutoBackupFolder(){
 }
 function nextBackupDue(){
   const freq=localStorage.getItem('paisa_autobackup_freq')||'monthly';
+  const time=localStorage.getItem('paisa_autobackup_time')||'09:00';
   const last=parseInt(localStorage.getItem('paisa_autobackup_last')||'0',10);
   const days=FREQ_DAYS[freq]||30;
-  return last+days*86400000;
+  const due=new Date(last+days*86400000);
+  const[hh,mm]=time.split(':').map(Number);
+  due.setHours(hh||0,mm||0,0,0);
+  return due.getTime();
+}
+function saveAutoBackupTime(){
+  localStorage.setItem('paisa_autobackup_time',document.getElementById('autobackup-time').value||'09:00');
+  updateAutoBackupStatus();
 }
 async function updateAutoBackupStatus(){
   const el=document.getElementById('autobackup-status');
@@ -2801,7 +2827,7 @@ async function updateAutoBackupStatus(){
   if(folderBtn) folderBtn.style.display=supported?'block':'none';
   const enabled=localStorage.getItem('paisa_autobackup_enabled')==='1';
   if(!enabled){el.textContent='';if(folderCard)folderCard.style.display='none';if(permLost)permLost.style.display='none';return;}
-  let dueTxt='Next backup: '+new Date(nextBackupDue()).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});
+  let dueTxt='Next backup: '+new Date(nextBackupDue()).toLocaleString('en-IN',{day:'numeric',month:'short',year:'numeric',hour:'numeric',minute:'2-digit'});
   if(!supported){
     el.textContent='Your browser can\'t save straight to a folder, so backups will download to your device automatically. '+dueTxt;
     if(folderCard)folderCard.style.display='none';
@@ -2885,11 +2911,14 @@ function checkAutoBackup(){
 function initAutoBackupUI(){
   const enabled=localStorage.getItem('paisa_autobackup_enabled')==='1';
   const freq=localStorage.getItem('paisa_autobackup_freq')||'monthly';
+  const time=localStorage.getItem('paisa_autobackup_time')||'09:00';
   const tog=document.getElementById('autobackup-toggle');
   const sel=document.getElementById('autobackup-freq');
+  const timeEl=document.getElementById('autobackup-time');
   const opts=document.getElementById('autobackup-options');
   if(tog) tog.checked=enabled;
   if(sel) sel.value=freq;
+  if(timeEl) timeEl.value=time;
   if(opts) opts.style.display=enabled?'flex':'none';
   updateAutoBackupStatus();
 }
