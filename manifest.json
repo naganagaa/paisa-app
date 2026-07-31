@@ -1,0 +1,26 @@
+{
+  "name": "Paisa — Personal Finance",
+  "short_name": "Paisa",
+  "description": "Track your personal expenses offline",
+  "start_url": "/paisa-app/",
+  "scope": "/paisa-app/",
+  "id": "/paisa-app/",
+  "display": "standalone",
+  "background_color": "#fafaf8",
+  "theme_color": "#0f0f0f",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/paisa-app/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/paisa-app/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
